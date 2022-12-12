@@ -18,6 +18,7 @@
 
 class Application : public GLFWApplication {
 private:
+    int score = 0;
     glm::ivec2 selectorPos;       // X and Y pos of the selector in [0,numSq]
     int numSquares[2];            // Number of squares in X and Y direction
     void moveSelector(int x, int y);
