@@ -16,17 +16,32 @@ void ActiveBlock::generate() {
             }
         }
     }
-    switch (rand() % 1) {
+    switch (rand() % 5) {
         case 0:
             tiles[0][0][1] = true;     //
             tiles[0][1][1] = true;     //    ##
             tiles[0][1][2] = true;     //    #
             break;
         case 1:
-            tiles[0][0][1] = true;
-            tiles[0][1][0] = true;
-            tiles[0][1][1] = true;
+            tiles[0][0][1] = true;    //    #
+            tiles[0][1][1] = true;    //    #
             break;
+        case 2:
+            tiles[0][0][1] = true;    //
+            tiles[0][1][1] = true;    //    #
+            tiles[0][1][0] = true;    //    ##
+            tiles[0][2][0] = true;    //     #
+            break;
+        case 3:
+            tiles[0][1][1] = true;    //    #
+            break;
+        case 4:
+            tiles[0][0][1] = true;    //
+            tiles[0][0][2] = true;    //    #
+            tiles[0][1][1] = true;    //    #
+            tiles[0][2][1] = true;    //    ##
+            break;
+
     }
 
 }
