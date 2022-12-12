@@ -1,4 +1,4 @@
-#include "LabApplication.h"
+#include "Application.h"
 #include "resources/shaders/shader_v.glsl"
 #include "resources/shaders/shader_f.glsl"
 #include <Keyboard.h>
@@ -6,10 +6,10 @@
 #include <PerspectiveCamera.h>
 #include <LightManager.h>
 #include <Model.h>
+#include "ActiveBlock.h"
 
-
-LabApplication::LabApplication(const std::string &name,
-                                 const std::string &version) :
+Application::Application(const std::string &name,
+                         const std::string &version) :
     GLFWApplication(name, version),
     selectorPos{},
     numSquares{} {
@@ -17,11 +17,11 @@ LabApplication::LabApplication(const std::string &name,
 
 
 
-void LabApplication::parseArguments(int argc, char **argv) {
+void Application::parseArguments(int argc, char **argv) {
     GLFWApplication::parseArguments(argc, argv);
 }
 
-unsigned LabApplication::init() {
+unsigned Application::init() {
     GLFWApplication::init();
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
@@ -31,7 +31,7 @@ unsigned LabApplication::init() {
     return 0;
 }
 
-int LabApplication::run() {
+int Application::run() {
     const int row = 5;
     const int col = 5;
     numSquares[0] = row;
@@ -41,17 +41,15 @@ int LabApplication::run() {
     auto shader = std::make_shared<Shader>(vertexShaderSrc, shader_f);
 
     // SETTING UP CAMERA
-    PerspectiveCamera camera({45.0f, static_cast<float>(winWidth), static_cast<float>(winHeight), 1.0f, -10.0f}, {0.0f, 0.0f, 15.5f});
+    PerspectiveCamera camera({45.0f, static_cast<float>(winWidth), static_cast<float>(winHeight), 1.0f, -10.0f}, {2.0f, 2.0f, 15.5f}, {2.0f, 2.0f, 0.0f});
 
-    // Chessboard
     Model tunnelFarSide(GeometricTools::UnitGridGeometry3DWTCoords<5, 5>(),
                         GeometricTools::UnitGridTopologyTriangles<5, 5>(),
                         BufferLayout({{ShaderDataType::Float3, "position"},
                              {ShaderDataType::Float3, "color"},
                              {ShaderDataType::Float2, "texture"}}));
     tunnelFarSide.setScale({5.0f, 5.0f, 5.0f});
-    tunnelFarSide.setTranslation({0.0f, 0.0f, -0.5f});
-    moveSelector(0, 0); // important to initialize otherwise garbage is in VBO
+    tunnelFarSide.setTranslation({2.0f, 2.0f, -0.5f});
 
     Model tunnelSideWall(GeometricTools::UnitGridGeometry3DWTCoords<10, 5>(),
                          GeometricTools::UnitGridTopologyTriangles<10, 5>(),
@@ -61,6 +59,7 @@ int LabApplication::run() {
     tunnelSideWall.setScale({10.0f, 5.0f, 5.0f});
 
 
+    char squares[5][5][10] = {};
 
 //    Model skybox(GeometricTools::UnitCube3D24WNormals,
 //                 GeometricTools::UnitCube3DTopologyTriangles24,
@@ -69,14 +68,13 @@ int LabApplication::run() {
 //    skybox.setScale({100.0f, 100.0f, 100.0f});
 //    skybox.setTranslation({0.0f, -10.0f, -10.0f});
 
-
-
-
+    ActiveBlock activeBlock;
 
     // TEXTURES
     auto textureManager = TextureManager::GetInstance();
     textureManager->LoadTexture2D("floor", "floor_texture.png", 0);
     textureManager->LoadCubeMap("cube", {"cube_texture.png"}, 1);
+    textureManager->LoadCubeMap("active-box", {"transparent-box.png"}, 3);
     textureManager->LoadCubeMap("skybox", {"front.jpg", "back.jpg", "top.jpg", "bottom.jpg", "right.jpg", "left.jpg"}, 2);
     shader->setUniform("u_flatTexture", 0);
     shader->setUniform("u_cubeTexture", 1);
@@ -96,12 +94,9 @@ int LabApplication::run() {
     auto keyLeft = Keyboard(GLFW_KEY_LEFT, 350);
     auto keyRight = Keyboard(GLFW_KEY_RIGHT, 350);
     auto keyEnter = Keyboard(GLFW_KEY_ENTER, 350);
+    auto keyX = Keyboard(GLFW_KEY_X, 350);
     auto keyT = Keyboard(GLFW_KEY_T, 500);  // Toggles blending
     auto keyQ = Keyboard(GLFW_KEY_Q);       // Quiting the application
-    auto keyH = Keyboard(GLFW_KEY_H);       // Rotate camera clockwise
-    auto keyL = Keyboard(GLFW_KEY_L);       // Rotate camera anti clockwise
-    auto keyP = Keyboard(GLFW_KEY_P);       // Zoom in camera
-    auto keyO = Keyboard(GLFW_KEY_O);       // Zoom out camera
 
     bool blendTexturesWithColor = true;
     float elapsedTime, deltaTime, lastTime = 0.0f;
@@ -128,22 +123,17 @@ int LabApplication::run() {
 
         tunnelFarSide.bindVBO();
         if (keyUp.isPressed(window))
-            moveSelector(0, 1);
+            activeBlock.move(0, 1, 0);
         if (keyDown.isPressed(window))
-            moveSelector(0, -1);
+            activeBlock.move(0, -1, 0);
         if (keyLeft.isPressed(window))
-            moveSelector(-1, 0);
+            activeBlock.move(-1, 0, 0);
         if (keyRight.isPressed(window))
-            moveSelector(1, 0);
+            activeBlock.move(1, 0, 0);
+        if (keyX.isPressed(window))
+            activeBlock.move(0, 0, -1);
 
-        if (keyL.isPressed(window))
-            camera.rotate({0.0f, 1.0f, 0.0f}, deltaTime);
-        if (keyH.isPressed(window))
-            camera.rotate({0.0f, 1.0f, 0.0f}, -deltaTime);
-        if (keyP.isPressed(window))
-            camera.zoom(deltaTime);
-        if (keyO.isPressed(window))
-            camera.zoom(-deltaTime);
+
         if (keyEnter.isPressed(window))
             activateSelector(chessPieces);
 
@@ -171,28 +161,31 @@ int LabApplication::run() {
 
         // left
         tunnelSideWall.setRotation({0.0f, 1.0f, 0.0f}, -90);
-        tunnelSideWall.setTranslation({-2.5f, 0.0f, 4.5f});
+        tunnelSideWall.setTranslation({-0.5f, 2.0f, 4.5f});
         tunnelSideWall.draw(shader);
 
         // right
-        tunnelSideWall.setTranslation({2.5f, 0.0f, 4.5f});
+        tunnelSideWall.setTranslation({4.5f, 2.0f, 4.5f});
         tunnelSideWall.draw(shader);
 
         // top
         tunnelSideWall.setRotation({0.0f, 0.0f, 1.0f}, 90);
         tunnelSideWall.addRotation({0.0f, 1.0f, 0.0f}, 90);
-        tunnelSideWall.setTranslation({0.0f, 2.5f, 4.5f});
+        tunnelSideWall.setTranslation({2.0f, 4.5f, 4.5f});
         tunnelSideWall.draw(shader);
 
         // bottom
-        tunnelSideWall.setTranslation({0.0f, -2.5f, 4.5f});
+        tunnelSideWall.setTranslation({2.0f, -0.5f, 4.5f});
         tunnelSideWall.draw(shader);
 
         shader->setUniform("u_chessBoard_normal", false);
 
-        cube.setScale({1.0f, 1.0f, 1.0f});
-        cube.setTranslation({2.0f, 0.0f, 8.0f});
-        cube.draw(shader);
+        shader->setUniform("u_cubemap", true);
+        shader->setUniform("u_cubeTexture", 3);
+        activeBlock.draw(shader);
+        shader->setUniform("u_cubemap", false);
+
+
 
 
 
@@ -210,7 +203,7 @@ int LabApplication::run() {
     return 0;
 }
 
-void LabApplication::moveSelector(int x, int y) {
+void Application::moveSelector(int x, int y) {
     // Calculate new position
     int newPosX = selectorPos.x + x;
     int newPosY = selectorPos.y + y;
@@ -240,7 +233,7 @@ void LabApplication::moveSelector(int x, int y) {
     }
 }
 
-void LabApplication::activateSelector(std::list<GeometricTools::chessPiece> &pieces) {
+void Application::activateSelector(std::list<GeometricTools::chessPiece> &pieces) {
     auto highlightedPiece = std::find_if(pieces.begin(), pieces.end(), [](const auto & piece) { return piece.highlighted; });
     auto selectPiece = std::find_if(pieces.begin(), pieces.end(), [&](const auto & piece) { return selectorPos == piece.squareNumber; });
     if (highlightedPiece != pieces.end()) {
@@ -253,7 +246,7 @@ void LabApplication::activateSelector(std::list<GeometricTools::chessPiece> &pie
 }
 
 template<typename T>
-void LabApplication::setUniformAllShaders(const std::string &str, T value) {
+void Application::setUniformAllShaders(const std::string &str, T value) {
     for (const auto & shader : allShaders)
         shader->setUniform(str, value);
 }

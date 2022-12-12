@@ -37,6 +37,13 @@ namespace RenderCommands {
         shader->setUniform("line", false);
     }
 
+    inline void enableGLDepthTesting() {
+        glEnable(GL_DEPTH_TEST);
+    }
+    inline void disableGLDepthTesting() {
+        glDisable(GL_DEPTH_TEST);
+    }
+
 }
 
 

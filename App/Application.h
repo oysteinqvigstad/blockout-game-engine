@@ -1,5 +1,5 @@
-#ifndef PROG2002_LABAPPLICATION_H
-#define PROG2002_LABAPPLICATION_H
+#ifndef PROG2002_APPLICATION_H
+#define PROG2002_APPLICATION_H
 
 
 #include "GLFWApplication.h"
@@ -15,7 +15,7 @@
 #include <glm/glm.hpp>
 #include <array>
 
-class LabApplication : public GLFWApplication {
+class Application : public GLFWApplication {
 private:
     glm::ivec2 selectorPos;       // X and Y pos of the selector in [0,numSq]
     int numSquares[2];            // Number of squares in X and Y direction
@@ -25,11 +25,11 @@ private:
     template <typename T>
     void setUniformAllShaders(const std::string &str, T value);
 public:
-    LabApplication(const std::string& name, const std::string& version);
+    Application(const std::string& name, const std::string& version);
     void parseArguments(int argc, char **argv) override;
     unsigned init() override;
     int run() override;
 
 };
 
-#endif //PROG2002_LABAPPLICATION_H
+#endif //PROG2002_APPLICATION_H
