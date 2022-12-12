@@ -1,6 +1,6 @@
-project(App)
+project(BlockOut)
 
-add_executable(${PROJECT_NAME} main.cpp LabApplication.cpp ActiveBlock.cpp)
+add_executable(${PROJECT_NAME} main.cpp Application.cpp ActiveBlock.cpp)
 target_link_libraries(${PROJECT_NAME} PRIVATE glad glfw glm stb TCLAP Engine::GLFWApplication Engine::Renderer Engine::GeometricTools Engine::Input)
 
 # Ensure that STB is active

@@ -1,4 +1,4 @@
-#include "LabApplication.h"
+#include "Application.h"
 #include "resources/shaders/shader_v.glsl"
 #include "resources/shaders/shader_f.glsl"
 #include <Keyboard.h>
@@ -8,8 +8,8 @@
 #include <Model.h>
 #include "ActiveBlock.h"
 
-LabApplication::LabApplication(const std::string &name,
-                                 const std::string &version) :
+Application::Application(const std::string &name,
+                         const std::string &version) :
     GLFWApplication(name, version),
     selectorPos{},
     numSquares{} {
@@ -17,11 +17,11 @@ LabApplication::LabApplication(const std::string &name,
 
 
 
-void LabApplication::parseArguments(int argc, char **argv) {
+void Application::parseArguments(int argc, char **argv) {
     GLFWApplication::parseArguments(argc, argv);
 }
 
-unsigned LabApplication::init() {
+unsigned Application::init() {
     GLFWApplication::init();
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
@@ -31,7 +31,7 @@ unsigned LabApplication::init() {
     return 0;
 }
 
-int LabApplication::run() {
+int Application::run() {
     const int row = 5;
     const int col = 5;
     numSquares[0] = row;
@@ -43,7 +43,6 @@ int LabApplication::run() {
     // SETTING UP CAMERA
     PerspectiveCamera camera({45.0f, static_cast<float>(winWidth), static_cast<float>(winHeight), 1.0f, -10.0f}, {2.0f, 2.0f, 15.5f}, {2.0f, 2.0f, 0.0f});
 
-    // Chessboard
     Model tunnelFarSide(GeometricTools::UnitGridGeometry3DWTCoords<5, 5>(),
                         GeometricTools::UnitGridTopologyTriangles<5, 5>(),
                         BufferLayout({{ShaderDataType::Float3, "position"},
@@ -51,7 +50,6 @@ int LabApplication::run() {
                              {ShaderDataType::Float2, "texture"}}));
     tunnelFarSide.setScale({5.0f, 5.0f, 5.0f});
     tunnelFarSide.setTranslation({2.0f, 2.0f, -0.5f});
-    moveSelector(0, 0); // important to initialize otherwise garbage is in VBO
 
     Model tunnelSideWall(GeometricTools::UnitGridGeometry3DWTCoords<10, 5>(),
                          GeometricTools::UnitGridTopologyTriangles<10, 5>(),
@@ -61,6 +59,7 @@ int LabApplication::run() {
     tunnelSideWall.setScale({10.0f, 5.0f, 5.0f});
 
 
+    char squares[5][5][10] = {};
 
 //    Model skybox(GeometricTools::UnitCube3D24WNormals,
 //                 GeometricTools::UnitCube3DTopologyTriangles24,
@@ -69,9 +68,7 @@ int LabApplication::run() {
 //    skybox.setScale({100.0f, 100.0f, 100.0f});
 //    skybox.setTranslation({0.0f, -10.0f, -10.0f});
 
-
     ActiveBlock activeBlock;
-
 
     // TEXTURES
     auto textureManager = TextureManager::GetInstance();
@@ -189,11 +186,6 @@ int LabApplication::run() {
         shader->setUniform("u_cubemap", false);
 
 
-        RenderCommands::setWireframeMode(shader);
-        cube.setScale({1.0f, 1.0f, 1.0f});
-        cube.setTranslation({0.0f, 0.0f, 9.0f});
-        cube.draw(shader);
-        RenderCommands::setSolidMode(shader);
 
 
 
@@ -211,7 +203,7 @@ int LabApplication::run() {
     return 0;
 }
 
-void LabApplication::moveSelector(int x, int y) {
+void Application::moveSelector(int x, int y) {
     // Calculate new position
     int newPosX = selectorPos.x + x;
     int newPosY = selectorPos.y + y;
@@ -241,7 +233,7 @@ void LabApplication::moveSelector(int x, int y) {
     }
 }
 
-void LabApplication::activateSelector(std::list<GeometricTools::chessPiece> &pieces) {
+void Application::activateSelector(std::list<GeometricTools::chessPiece> &pieces) {
     auto highlightedPiece = std::find_if(pieces.begin(), pieces.end(), [](const auto & piece) { return piece.highlighted; });
     auto selectPiece = std::find_if(pieces.begin(), pieces.end(), [&](const auto & piece) { return selectorPos == piece.squareNumber; });
     if (highlightedPiece != pieces.end()) {
@@ -254,7 +246,7 @@ void LabApplication::activateSelector(std::list<GeometricTools::chessPiece> &pie
 }
 
 template<typename T>
-void LabApplication::setUniformAllShaders(const std::string &str, T value) {
+void Application::setUniformAllShaders(const std::string &str, T value) {
     for (const auto & shader : allShaders)
         shader->setUniform(str, value);
 }

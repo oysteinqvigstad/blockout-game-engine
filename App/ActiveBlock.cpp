@@ -68,3 +68,13 @@ bool ActiveBlock::checkWallCollision() {
     }
     return false;
 }
+
+bool ActiveBlock::goDown(const bool completely) {
+    posz--;
+    if (checkWallCollision()) {
+        // update board
+        return true;
+    }
+
+    return false;
+}
