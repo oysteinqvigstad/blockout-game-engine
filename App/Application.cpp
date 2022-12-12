@@ -59,7 +59,6 @@ int Application::run() {
     tunnelSideWall.setScale({10.0f, 5.0f, 5.0f});
 
 
-    char squares[5][5][10] = {};
 
 //    Model skybox(GeometricTools::UnitCube3D24WNormals,
 //                 GeometricTools::UnitCube3DTopologyTriangles24,
@@ -86,6 +85,13 @@ int Application::run() {
                GeometricTools::UnitCube3DTopologyTriangles24,
                BufferLayout({{ShaderDataType::Float3, "position"},
                              {ShaderDataType::Float3, "normals"}}));
+
+    cube.setScale({1.0f, 1.0f, 1.0f});
+    bool squares[10][5][5] = {};
+    squares[0][2][3] = true;
+    squares[7][2][4] = true;
+
+
 
     // KEYBOARD
     auto keyEsc = Keyboard(GLFW_KEY_ESCAPE);
@@ -123,15 +129,15 @@ int Application::run() {
 
         tunnelFarSide.bindVBO();
         if (keyUp.isPressed(window))
-            activeBlock.move(0, 1, 0);
+            activeBlock.moveSideways(squares, 0, 1);
         if (keyDown.isPressed(window))
-            activeBlock.move(0, -1, 0);
+            activeBlock.moveSideways(squares, 0, -1);
         if (keyLeft.isPressed(window))
-            activeBlock.move(-1, 0, 0);
+            activeBlock.moveSideways(squares, -1, 0);
         if (keyRight.isPressed(window))
-            activeBlock.move(1, 0, 0);
+            activeBlock.moveSideways(squares, 1, 0);
         if (keyX.isPressed(window))
-            activeBlock.move(0, 0, -1);
+            activeBlock.goDown(squares);
 
 
         if (keyEnter.isPressed(window))
@@ -181,21 +187,24 @@ int Application::run() {
         shader->setUniform("u_chessBoard_normal", false);
 
         shader->setUniform("u_cubemap", true);
+        shader->setUniform("u_cubeTexture", 1);
+        drawCubes(squares, cube, shader);
         shader->setUniform("u_cubeTexture", 3);
         activeBlock.draw(shader);
         shader->setUniform("u_cubemap", false);
 
 
-
+        if (activeBlock.hasCollided(squares))
+            std::cout << "collision" << std::endl;
 
 
         // light
-        lightManager->setPosition("spot", {3.5 * cos(elapsedTime), 3.5 * sin(elapsedTime), 0.0f});
+        lightManager->setPosition("spot", {2+ 3.5 * cos(elapsedTime), 2 +3.5 * sin(elapsedTime), 5.0f});
         shader->uploadSpotlight("spot");
         cube.setTranslation(lightManager->getSpotLight("spot")->m_position);
         cube.setScale({0.25f, 0.25f, 0.25f});
         cube.draw(shader);
-        cube.setScale({0.5f, 0.5f, 0.5f});
+        cube.setScale({1.0f, 1.0f, 1.0f});
 
 
         glfwSwapBuffers(window);
@@ -245,8 +254,39 @@ void Application::activateSelector(std::list<GeometricTools::chessPiece> &pieces
     }
 }
 
+void Application::drawCubes(bool (*squares)[5][5],
+                            Model cube,
+                            const std::shared_ptr<Shader> &shader) {
+
+    glm::vec3 colors[10] = {{1.0f, 0.0f, 0.0f},
+                            {0.0f, 1.0f, 0.0f},
+                            {0.0f, 0.0f, 1.0f},
+                            {1.0f, 0.0f, 0.0f},
+                            {0.0f, 1.0f, 0.0f},
+                            {0.0f, 0.0f, 1.0f},
+                            {1.0f, 0.0f, 0.0f},
+                            {0.0f, 1.0f, 0.0f},
+                            {0.0f, 0.0f, 1.0f},
+                            {1.0f, 0.0f, 0.0f}};
+
+    for (int i = 0; i < 10; i++) {
+        for (int j = 0; j < 5; j++) {
+            for (int k = 0; k < 5; k++) {
+                if (squares[i][j][k]) {
+                    shader->setUniform("u_color", colors[i]);
+                    cube.setTranslation({k, j, i});
+                    cube.draw(shader);
+                }
+            }
+        }
+    }
+}
+
+
 template<typename T>
 void Application::setUniformAllShaders(const std::string &str, T value) {
     for (const auto & shader : allShaders)
         shader->setUniform(str, value);
 }
+
+
