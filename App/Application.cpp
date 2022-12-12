@@ -88,8 +88,6 @@ int Application::run() {
 
     cube.setScale({1.0f, 1.0f, 1.0f});
     bool squares[10][5][5] = {};
-    squares[0][2][3] = true;
-    squares[7][2][4] = true;
 
 
 
@@ -144,6 +142,9 @@ int Application::run() {
         if (timeSinceLastDrop > 2.0f) {
             activeBlock.goDown(squares, timeSinceLastDrop);
         }
+
+        removeLines(squares);
+
 
         if (keyEnter.isPressed(window))
             activateSelector(chessPieces);
@@ -279,6 +280,32 @@ void Application::drawCubes(bool (*squares)[5][5],
                     cube.setTranslation({k, j, i});
                     cube.draw(shader);
                 }
+            }
+        }
+    }
+}
+
+void Application::removeLines(bool squares[10][5][5]) {
+    for (int i = 0; i < 10; i++) {
+        bool forRemoval[5][5] = {};
+        for (int j = 0; j < 5; j++) {
+            if (squares[i][j][0] && squares[i][j][1] &&
+                squares[i][j][2] && squares[i][j][3] &&
+                squares[i][j][4]) {
+                for (int k = 0; k < 5; k++)
+                    forRemoval[j][k] = true;
+            }
+            if (squares[i][0][j] && squares[i][1][j] &&
+                squares[i][2][j] && squares[i][3][j] &&
+                squares[i][4][j]) {
+                for (int k = 0; k < 5; k++)
+                    forRemoval[k][j] = true;
+            }
+        }
+        for (int j = 0; j < 5; j++) {
+            for (int k = 0; k < 5; k++) {
+                if (forRemoval[j][k])
+                    squares[i][j][k] = false;
             }
         }
     }

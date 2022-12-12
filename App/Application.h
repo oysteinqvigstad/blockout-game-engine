@@ -26,6 +26,7 @@ private:
     template <typename T>
     void setUniformAllShaders(const std::string &str, T value);
     void drawCubes(bool squares[10][5][5], Model cube, const std::shared_ptr<Shader> &shader);
+    void removeLines(bool squares[10][5][5]);
 public:
     Application(const std::string& name, const std::string& version);
     void parseArguments(int argc, char **argv) override;
