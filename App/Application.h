@@ -3,6 +3,7 @@
 
 
 #include "GLFWApplication.h"
+#include <Model.h>
 #include <VertexArray.h>
 #include <GeometricTools.h>
 #include <ShaderDataType.h>
@@ -24,6 +25,7 @@ private:
     void activateSelector(std::list<GeometricTools::chessPiece> &pieces);
     template <typename T>
     void setUniformAllShaders(const std::string &str, T value);
+    void drawCubes(bool squares[10][5][5], Model cube, const std::shared_ptr<Shader> &shader);
 public:
     Application(const std::string& name, const std::string& version);
     void parseArguments(int argc, char **argv) override;

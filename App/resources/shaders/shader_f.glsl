@@ -49,7 +49,7 @@ void main() {
         vec4 frag;
         if (u_cubemap) {
             normal = vs_normal;
-            frag = mix(vec4(u_color, 1.0), texture(u_cubeTexture, vs_position), 0.9);
+            frag = mix(vec4(u_color, 1.0), texture(u_cubeTexture, vs_position), 0.5);
         } else {
             normal = vs_normal;
             if (u_chessBoard_normal)
