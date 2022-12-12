@@ -1,0 +1,5 @@
+external/glfw
+external/glm
+external/stb
+external/tclap
+cmake-build-debug
