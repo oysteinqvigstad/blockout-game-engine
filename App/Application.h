@@ -18,6 +18,7 @@
 
 class Application : public GLFWApplication {
 private:
+    int score = 0;
     glm::ivec2 selectorPos;       // X and Y pos of the selector in [0,numSq]
     int numSquares[2];            // Number of squares in X and Y direction
     void moveSelector(int x, int y);
@@ -26,6 +27,7 @@ private:
     template <typename T>
     void setUniformAllShaders(const std::string &str, T value);
     void drawCubes(bool squares[10][5][5], Model cube, const std::shared_ptr<Shader> &shader);
+    void removeLines(bool squares[10][5][5]);
 public:
     Application(const std::string& name, const std::string& version);
     void parseArguments(int argc, char **argv) override;
