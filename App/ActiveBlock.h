@@ -21,10 +21,10 @@ private:
 public:
     ActiveBlock();
     void generate();
-    void move(int x, int y, int z);
+    void moveSideways(const bool squares[10][5][5], int x, int y);
     bool goDown(bool squares[10][5][5], bool completely = false);
     void draw(const std::shared_ptr<Shader> &shader);
-    bool hasCollided(bool squares[10][5][5]);
+    bool hasCollided(const bool squares[10][5][5]);
     void addBlockToBoard(bool squares[10][5][5]);
 
 };

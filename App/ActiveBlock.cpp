@@ -45,14 +45,12 @@ void ActiveBlock::draw(const std::shared_ptr<Shader> & shader) {
         RenderCommands::enableGLDepthTesting();
 }
 
-void ActiveBlock::move(int x, int y, int z) {
+void ActiveBlock::moveSideways(const bool (*squares)[5][5], int x, int y) {
     posx += x;
     posy += y;
-    posz += z;
-    if (checkWallCollision()) {
+    if (checkWallCollision() || hasCollided(squares)) {
         posx -= x;
         posy -= y;
-        posz -= z;
     }
 }
 
@@ -70,24 +68,22 @@ bool ActiveBlock::checkWallCollision() {
 }
 
 bool ActiveBlock::goDown(bool (*squares)[5][5], const bool completely) {
-    posz--;
-    if (hasCollided(squares)) {
-        posz++;
-        addBlockToBoard(squares);
-        // update board
-        return true;
-    }
-
+    do {
+        posz--;
+        if (hasCollided(squares)) {
+            addBlockToBoard(squares);
+                return true;
+        }
+    } while (completely);
     return false;
 }
 
-bool ActiveBlock::hasCollided(bool (*squares)[5][5]) {
+bool ActiveBlock::hasCollided(const bool (*squares)[5][5]) {
     for (int i = 0; i < 3; i++) {
         for (int j = 0; j < 3; j++) {
             for (int k = 0; k < 3; k++) {
                 if (tiles[i][j][k])
                     if (posz-i < 0 || squares[posz-i][posy+j][posx+k]) {
-                        addBlockToBoard(squares);
                         return true;
                     }
             }

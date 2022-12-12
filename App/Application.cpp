@@ -129,15 +129,15 @@ int Application::run() {
 
         tunnelFarSide.bindVBO();
         if (keyUp.isPressed(window))
-            activeBlock.move(0, 1, 0);
+            activeBlock.moveSideways(squares, 0, 1);
         if (keyDown.isPressed(window))
-            activeBlock.move(0, -1, 0);
+            activeBlock.moveSideways(squares, 0, -1);
         if (keyLeft.isPressed(window))
-            activeBlock.move(-1, 0, 0);
+            activeBlock.moveSideways(squares, -1, 0);
         if (keyRight.isPressed(window))
-            activeBlock.move(1, 0, 0);
+            activeBlock.moveSideways(squares, 1, 0);
         if (keyX.isPressed(window))
-            activeBlock.move(0, 0, -1);
+            activeBlock.goDown(squares);
 
 
         if (keyEnter.isPressed(window))
