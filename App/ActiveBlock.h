@@ -11,9 +11,8 @@
 class ActiveBlock {
 private:
     int posx, posy, posz;
-    char color;
     bool tiles[3][3][3];
-
+    bool freeze;
     Model cube;
 
 
@@ -22,7 +21,7 @@ public:
     ActiveBlock();
     void generate();
     void moveSideways(const bool squares[10][5][5], int x, int y);
-    bool goDown(bool squares[10][5][5], bool completely = false);
+    bool goDown(bool squares[10][5][5], float &timer, bool completely = false);
     void draw(const std::shared_ptr<Shader> &shader);
     bool hasCollided(const bool squares[10][5][5]);
     void addBlockToBoard(bool squares[10][5][5]);

@@ -100,12 +100,13 @@ int Application::run() {
     auto keyLeft = Keyboard(GLFW_KEY_LEFT, 350);
     auto keyRight = Keyboard(GLFW_KEY_RIGHT, 350);
     auto keyEnter = Keyboard(GLFW_KEY_ENTER, 350);
+    auto keySpace = Keyboard(GLFW_KEY_SPACE, 350);
     auto keyX = Keyboard(GLFW_KEY_X, 350);
     auto keyT = Keyboard(GLFW_KEY_T, 500);  // Toggles blending
     auto keyQ = Keyboard(GLFW_KEY_Q);       // Quiting the application
 
     bool blendTexturesWithColor = true;
-    float elapsedTime, deltaTime, lastTime = 0.0f;
+    float elapsedTime, deltaTime, lastTime, timeSinceLastDrop = 0.0f;
 
     // Lights
     auto lightPos = glm::vec3(15.0f, 2.0f, 1.0f);
@@ -122,12 +123,11 @@ int Application::run() {
         elapsedTime = static_cast<float>(glfwGetTime());
         deltaTime = elapsedTime - lastTime;
         lastTime = elapsedTime;
-
+        timeSinceLastDrop += deltaTime;
 
         if (keyEsc.isPressed(window) || keyQ.isPressed(window))
             glfwSetWindowShouldClose(window, GLFW_TRUE);
 
-        tunnelFarSide.bindVBO();
         if (keyUp.isPressed(window))
             activeBlock.moveSideways(squares, 0, 1);
         if (keyDown.isPressed(window))
@@ -137,8 +137,13 @@ int Application::run() {
         if (keyRight.isPressed(window))
             activeBlock.moveSideways(squares, 1, 0);
         if (keyX.isPressed(window))
-            activeBlock.goDown(squares);
+            activeBlock.goDown(squares, timeSinceLastDrop);
+        if (keySpace.isPressed(window))
+            activeBlock.goDown(squares, timeSinceLastDrop, true);
 
+        if (timeSinceLastDrop > 2.0f) {
+            activeBlock.goDown(squares, timeSinceLastDrop);
+        }
 
         if (keyEnter.isPressed(window))
             activateSelector(chessPieces);
@@ -193,9 +198,6 @@ int Application::run() {
         activeBlock.draw(shader);
         shader->setUniform("u_cubemap", false);
 
-
-        if (activeBlock.hasCollided(squares))
-            std::cout << "collision" << std::endl;
 
 
         // light
