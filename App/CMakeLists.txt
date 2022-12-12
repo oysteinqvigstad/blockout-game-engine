@@ -1,6 +1,6 @@
 project(App)
 
-add_executable(${PROJECT_NAME} main.cpp LabApplication.cpp)
+add_executable(${PROJECT_NAME} main.cpp LabApplication.cpp ActiveBlock.cpp)
 target_link_libraries(${PROJECT_NAME} PRIVATE glad glfw glm stb TCLAP Engine::GLFWApplication Engine::Renderer Engine::GeometricTools Engine::Input)
 
 # Ensure that STB is active
@@ -18,7 +18,11 @@ add_custom_command(
         COMMAND ${CMAKE_COMMAND} -E copy
         ${CMAKE_CURRENT_SOURCE_DIR}/resources/textures/cube_texture.png
         ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/resources/textures/cube_texture.png)
-
+add_custom_command(
+        TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_CURRENT_SOURCE_DIR}/resources/textures/transparent-box.png
+        ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/resources/textures/transparent-box.png)
 # Add path as a define in Renderer for TextureManager.cpp
 target_compile_definitions(Renderer PRIVATE
         TEXTURES_DIR="${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/resources/textures/")

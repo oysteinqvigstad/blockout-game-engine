@@ -21,7 +21,7 @@ PerspectiveCamera::PerspectiveCamera(const PerspectiveCamera::Frustrum &frustrum
                                              m_frustrum.height,
                                              m_frustrum.near,
                                              m_frustrum.far);
-    this->m_viewMatrix = glm::lookAt(m_cameraPos, m_cameraPos + m_cameraTowards, m_worldUp);
+    this->m_viewMatrix = glm::lookAt(m_cameraPos, target, m_worldUp);
 }
 
 void PerspectiveCamera::SetFrustrum(const Frustrum& frustrum) {
