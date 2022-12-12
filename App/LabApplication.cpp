@@ -41,7 +41,7 @@ int LabApplication::run() {
     auto shader = std::make_shared<Shader>(vertexShaderSrc, shader_f);
 
     // SETTING UP CAMERA
-    PerspectiveCamera camera({45.0f, static_cast<float>(winWidth), static_cast<float>(winHeight), 1.0f, -10.0f}, {0.0f, 0.0f, 32.0f});
+    PerspectiveCamera camera({45.0f, static_cast<float>(winWidth), static_cast<float>(winHeight), 1.0f, -10.0f}, {0.0f, 0.0f, 15.5f});
 
     // Chessboard
     Model tunnelFarSide(GeometricTools::UnitGridGeometry3DWTCoords<5, 5>(),
@@ -49,7 +49,8 @@ int LabApplication::run() {
                         BufferLayout({{ShaderDataType::Float3, "position"},
                              {ShaderDataType::Float3, "color"},
                              {ShaderDataType::Float2, "texture"}}));
-    tunnelFarSide.setScale({10.0f, 10.0f, 10.0f});
+    tunnelFarSide.setScale({5.0f, 5.0f, 5.0f});
+    tunnelFarSide.setTranslation({0.0f, 0.0f, -0.5f});
     moveSelector(0, 0); // important to initialize otherwise garbage is in VBO
 
     Model tunnelSideWall(GeometricTools::UnitGridGeometry3DWTCoords<10, 5>(),
@@ -57,16 +58,16 @@ int LabApplication::run() {
                          BufferLayout({{ShaderDataType::Float3, "position"},
                                       {ShaderDataType::Float3, "color"},
                                       {ShaderDataType::Float2, "texture"}}));
-    tunnelSideWall.setScale({20.0f, 10.0f, 10.0f});
+    tunnelSideWall.setScale({10.0f, 5.0f, 5.0f});
 
 
 
-    Model skybox(GeometricTools::UnitCube3D24WNormals,
-                 GeometricTools::UnitCube3DTopologyTriangles24,
-                 BufferLayout({{ShaderDataType::Float3, "position"},
-                               {ShaderDataType::Float3, "normals"}}));
-    skybox.setScale({100.0f, 100.0f, 100.0f});
-    skybox.setTranslation({0.0f, -10.0f, -10.0f});
+//    Model skybox(GeometricTools::UnitCube3D24WNormals,
+//                 GeometricTools::UnitCube3DTopologyTriangles24,
+//                 BufferLayout({{ShaderDataType::Float3, "position"},
+//                               {ShaderDataType::Float3, "normals"}}));
+//    skybox.setScale({100.0f, 100.0f, 100.0f});
+//    skybox.setTranslation({0.0f, -10.0f, -10.0f});
 
 
 
@@ -87,8 +88,6 @@ int LabApplication::run() {
                GeometricTools::UnitCube3DTopologyTriangles24,
                BufferLayout({{ShaderDataType::Float3, "position"},
                              {ShaderDataType::Float3, "normals"}}));
-    cube.setScale({0.5f, 0.5f, 0.5f});
-    cube.setTranslation({0.0f, 0.5f, 0.0f});
 
     // KEYBOARD
     auto keyEsc = Keyboard(GLFW_KEY_ESCAPE);
@@ -157,44 +156,48 @@ int LabApplication::run() {
         shader->setUniform("u_view", camera.GetViewMatrix());
         shader->setUniform("u_cameraPos", camera.GetPosition());
 
-        shader->setUniform("u_cubeTexture", 2);
-        shader->setUniform("u_skybox", true);
-        shader->setUniform("u_view", glm::mat4(glm::mat3(camera.GetViewMatrix())));
-        skybox.draw(shader);
-        shader->setUniform("u_skybox", false);
-        shader->setUniform("u_cubeTexture", 1);
-        shader->setUniform("u_view", camera.GetViewMatrix());
+//        shader->setUniform("u_cubeTexture", 2);
+//        shader->setUniform("u_skybox", true);
+//        shader->setUniform("u_view", glm::mat4(glm::mat3(camera.GetViewMatrix())));
+//        skybox.draw(shader);
+//        shader->setUniform("u_skybox", false);
+//        shader->setUniform("u_cubeTexture", 1);
+//        shader->setUniform("u_view", camera.GetViewMatrix());
 
         // CUBE
-        shader->setUniform("u_cubemap", true);
-        for (const auto & piece : chessPieces) {
-            cube.setTranslation(piece.getTranslationMatrix());
-            shader->setUniform("u_color", piece.getColor(selectorPos));
-            cube.draw(shader);
-        }
-
-        shader->setUniform("u_cubemap", false);
         shader->setUniform("u_chessBoard_normal", true);
 
         tunnelFarSide.draw(shader);
 
+        // left
         tunnelSideWall.setRotation({0.0f, 1.0f, 0.0f}, -90);
-        tunnelSideWall.setTranslation({-5.0f, 0.0f, 10.0f});
+        tunnelSideWall.setTranslation({-2.5f, 0.0f, 4.5f});
         tunnelSideWall.draw(shader);
-        tunnelSideWall.setTranslation({5.0f, 0.0f, 10.0f});
+
+        // right
+        tunnelSideWall.setTranslation({2.5f, 0.0f, 4.5f});
         tunnelSideWall.draw(shader);
+
+        // top
         tunnelSideWall.setRotation({0.0f, 0.0f, 1.0f}, 90);
         tunnelSideWall.addRotation({0.0f, 1.0f, 0.0f}, 90);
-        tunnelSideWall.setTranslation({0.0f, 5.0f, 10.0f});
+        tunnelSideWall.setTranslation({0.0f, 2.5f, 4.5f});
         tunnelSideWall.draw(shader);
-        tunnelSideWall.setTranslation({0.0f, -5.0f, 10.0f});
+
+        // bottom
+        tunnelSideWall.setTranslation({0.0f, -2.5f, 4.5f});
         tunnelSideWall.draw(shader);
 
         shader->setUniform("u_chessBoard_normal", false);
 
+        cube.setScale({1.0f, 1.0f, 1.0f});
+        cube.setTranslation({2.0f, 0.0f, 8.0f});
+        cube.draw(shader);
+
+
 
         // light
-        lightManager->setPosition("spot", {7 * cos(elapsedTime), 7 * sin(elapsedTime), 0.0f});
+        lightManager->setPosition("spot", {3.5 * cos(elapsedTime), 3.5 * sin(elapsedTime), 0.0f});
         shader->uploadSpotlight("spot");
         cube.setTranslation(lightManager->getSpotLight("spot")->m_position);
         cube.setScale({0.25f, 0.25f, 0.25f});

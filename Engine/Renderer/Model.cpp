@@ -4,8 +4,6 @@
 #include <iostream>
 #include <sstream>
 
-#define TINYOBJLOADER_IMPLEMENTATION
-
 void Model::setTranslation(const glm::vec3 &displacement) {
     translation = glm::translate(glm::mat4(1.0f), displacement);
     recalculateTransformMatrix();
