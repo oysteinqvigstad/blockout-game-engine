@@ -21,7 +21,7 @@ private:
 public:
     ActiveBlock();
     void generate();
-    void move(int right, int up);
+    void move(int x, int y, int z);
     void draw(const std::shared_ptr<Shader> &shader);
 
 };

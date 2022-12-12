@@ -126,13 +126,16 @@ int LabApplication::run() {
 
         tunnelFarSide.bindVBO();
         if (keyUp.isPressed(window))
-            activeBlock.move(0, 1);
+            activeBlock.move(0, 1, 0);
         if (keyDown.isPressed(window))
-            activeBlock.move(0, -1);
+            activeBlock.move(0, -1, 0);
         if (keyLeft.isPressed(window))
-            activeBlock.move(-1, 0);
+            activeBlock.move(-1, 0, 0);
         if (keyRight.isPressed(window))
-            activeBlock.move(1, 0);
+            activeBlock.move(1, 0, 0);
+        if (keyX.isPressed(window))
+            activeBlock.move(0, 0, -1);
+
 
         if (keyEnter.isPressed(window))
             activateSelector(chessPieces);

@@ -18,6 +18,7 @@ void ActiveBlock::generate() {
     tiles[0][0][1] = true;
     tiles[0][1][0] = true;
     tiles[0][1][1] = true;
+    tiles[1][1][0] = true;
 }
 
 ActiveBlock::ActiveBlock()
@@ -33,25 +34,25 @@ void ActiveBlock::draw(const std::shared_ptr<Shader> & shader) {
         RenderCommands::disableGLDepthTesting();
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
-                if (tiles[0][i][j]) {
-                    cube.setTranslation({posx+j, posy+i, posz});
-                    cube.draw(shader);
+                for (int k = 0; k < 3; k++) {
+                    if (tiles[i][j][k]) {
+                        cube.setTranslation({posx+k, posy+j, posz-i});
+                        cube.draw(shader);
+                    }
                 }
             }
         }
         RenderCommands::enableGLDepthTesting();
 }
 
-void ActiveBlock::move(int right, int up) {
-    if (right) {
-        posx += right;
-        if (checkWallCollision())
-            posx -= right;
-    }
-    if (up) {
-        posy += up;
-        if (checkWallCollision())
-            posy -= up;
+void ActiveBlock::move(int x, int y, int z) {
+    posx += x;
+    posy += y;
+    posz += z;
+    if (checkWallCollision()) {
+        posx -= x;
+        posy -= y;
+        posz -= z;
     }
 }
 
@@ -60,7 +61,7 @@ bool ActiveBlock::checkWallCollision() {
         for (int j = 0; j < 3; j++) {
             for (int k = 0; k < 3; k++) {
                 if (tiles[i][j][k])
-                    if (k + posx > 4 || k + posx < 0 || j + posy > 4 || j + posy < 0)
+                    if (k + posx > 4 || k + posx < 0 || j + posy > 4 || j + posy < 0 || posz-i < 0)
                         return true;
             }
         }
