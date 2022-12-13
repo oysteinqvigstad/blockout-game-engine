@@ -23,6 +23,19 @@ add_custom_command(
         COMMAND ${CMAKE_COMMAND} -E copy
         ${CMAKE_CURRENT_SOURCE_DIR}/resources/textures/transparent-box.png
         ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/resources/textures/transparent-box.png)
+
+add_custom_command(
+        TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_CURRENT_SOURCE_DIR}/resources/textures/cube_texture.jpg
+        ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/resources/textures/cube_texture.jpg)
+
+add_custom_command(
+        TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_CURRENT_SOURCE_DIR}/resources/textures/walls.jpg
+        ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/resources/textures/walls.jpg)
+
 # Add path as a define in Renderer for TextureManager.cpp
 target_compile_definitions(Renderer PRIVATE
         TEXTURES_DIR="${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/resources/textures/")

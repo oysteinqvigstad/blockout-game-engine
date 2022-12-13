@@ -5,6 +5,7 @@ const std::string shader_f = R"(
 uniform samplerCube u_cubeTexture;
 uniform sampler2D u_flatTexture;
 
+uniform vec3 u_walls_normal;
 uniform bool u_skybox = false;
 uniform bool u_blend = true;
 uniform bool u_cubemap;
@@ -12,7 +13,7 @@ uniform vec3 u_cameraPos;
 uniform float u_ambientStrength = 1.0f;
 uniform float u_specularStrength = 1.0f;
 uniform float u_diffuseStrength = 1.0f;
-uniform bool u_chessBoard_normal = false;
+uniform bool u_walls = false;
 
 uniform vec3 u_color;
 flat in vec4 vs_color;
@@ -52,8 +53,8 @@ void main() {
             frag = mix(vec4(u_color, 1.0), texture(u_cubeTexture, vs_position), 0.5);
         } else {
             normal = vs_normal;
-            if (u_chessBoard_normal)
-                normal = vec3(0.0, 1.0, 0.0);
+            if (u_walls)
+                normal = u_walls_normal;
             frag = mix(vs_color, texture(u_flatTexture, vs_tcoords), 0.9);
         }
 
