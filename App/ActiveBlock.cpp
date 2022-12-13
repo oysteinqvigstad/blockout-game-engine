@@ -55,9 +55,14 @@ ActiveBlock::ActiveBlock()
     generate();
 }
 
-void ActiveBlock::draw(const std::shared_ptr<Shader> & shader) {
+void ActiveBlock::draw(const std::shared_ptr<Shader> & shader, const bool wireframe) {
         RenderCommands::disableGLDepthTesting();
-        for (int i = 0; i < 3; i++) {
+        shader->setUniform("u_color", {0.0f, 0.0f, 0.0f, 0.2f});
+        if (wireframe) {
+            RenderCommands::setWireframeMode(shader);
+            shader->setUniform("u_color", {1.0f, 1.0f, 1.0f, 1.0f});
+        }
+    for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
                 for (int k = 0; k < 3; k++) {
                     if (tiles[i][j][k]) {
@@ -67,6 +72,7 @@ void ActiveBlock::draw(const std::shared_ptr<Shader> & shader) {
                 }
             }
         }
+        RenderCommands::setSolidMode(shader);
         RenderCommands::enableGLDepthTesting();
 }
 
