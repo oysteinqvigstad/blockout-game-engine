@@ -109,7 +109,8 @@ int Application::run() {
     // Lights
     auto lightPos = glm::vec3(15.0f, 2.0f, 1.0f);
     auto lightManager = LightManager::GetInstance();
-    lightManager->addSpotLight({"spot", lightPos, 1.5f, 0.0f, 0.0f});
+    lightManager->addSpotLight({"spot", lightPos, 3.0f, 0.0f, 0.0f});
+    lightManager->addSpotLight({"spot2", lightPos, 3.0f, 0.0f, 0.0f});
     lightManager->moveLight("spot", {-15.0f, 0.0f, 0.0f});
     shader->uploadSpotlight("spot");
 
@@ -209,13 +210,17 @@ int Application::run() {
 
 
         // light
-        lightManager->setPosition("spot", {2+ 2 * cos(elapsedTime), 2 +2 * sin(elapsedTime), 5.0f});
+        lightManager->setPosition("spot", {2+ 2 * cos(elapsedTime*2), 2 +2 * sin(elapsedTime*2), 5.0f});
         shader->uploadSpotlight("spot");
         cube.setTranslation(lightManager->getSpotLight("spot")->m_position);
         cube.setScale({0.25f, 0.25f, 0.25f});
         cube.draw(shader);
-        cube.setScale({1.0f, 1.0f, 1.0f});
 
+        lightManager->setPosition("spot2", {2+ 2 * cos(elapsedTime*2), 2 +2 * sin(elapsedTime*2), 7.0f});
+        shader->uploadSpotlight("spot2");
+        cube.setTranslation(lightManager->getSpotLight("spot2")->m_position);
+        cube.draw(shader);
+        cube.setScale({1.0f, 1.0f, 1.0f});
 
         glfwSwapBuffers(window);
     }
