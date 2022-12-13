@@ -39,9 +39,12 @@ int Application::run() {
 
     // SHADERS
     auto shader = std::make_shared<Shader>(vertexShaderSrc, shader_f);
+    shader->setUniform("u_specularStrength", 2.0f);
+    shader->setUniform("u_diffuseStrength", 1.0f);
+    shader->setUniform("u_ambientStrength", 0.8f);
 
     // SETTING UP CAMERA
-    PerspectiveCamera camera({45.0f, static_cast<float>(winWidth), static_cast<float>(winHeight), 1.0f, -10.0f}, {2.0f, 2.0f, 15.5f}, {2.0f, 2.0f, 0.0f});
+    PerspectiveCamera camera({80.0f, static_cast<float>(winWidth), static_cast<float>(winHeight), 1.0f, -10.0f}, {2.0f, 2.0f, 12.4f}, {2.0f, 2.0f, 0.0f});
 
     Model tunnelFarSide(GeometricTools::UnitGridGeometry3DWTCoords<5, 5>(),
                         GeometricTools::UnitGridTopologyTriangles<5, 5>(),
@@ -60,21 +63,21 @@ int Application::run() {
 
 
 
-//    Model skybox(GeometricTools::UnitCube3D24WNormals,
-//                 GeometricTools::UnitCube3DTopologyTriangles24,
-//                 BufferLayout({{ShaderDataType::Float3, "position"},
-//                               {ShaderDataType::Float3, "normals"}}));
-//    skybox.setScale({100.0f, 100.0f, 100.0f});
-//    skybox.setTranslation({0.0f, -10.0f, -10.0f});
+    Model skybox(GeometricTools::UnitCube3D24WNormals,
+                 GeometricTools::UnitCube3DTopologyTriangles24,
+                 BufferLayout({{ShaderDataType::Float3, "position"},
+                               {ShaderDataType::Float3, "normals"}}));
+    skybox.setScale({100.0f, 100.0f, 100.0f});
+    skybox.setTranslation({0.0f, -20.0f, 0.0f});
 
     ActiveBlock activeBlock;
 
     // TEXTURES
     auto textureManager = TextureManager::GetInstance();
+//    textureManager->LoadTexture2D("floor", "walls.jpg", 0);
     textureManager->LoadTexture2D("floor", "walls.jpg", 0);
-    textureManager->LoadCubeMap("cube", {"cube_texture.jpg"}, 1);
-    textureManager->LoadCubeMap("active-box", {"transparent-box.png"}, 3);
-    textureManager->LoadCubeMap("skybox", {"front.jpg", "back.jpg", "top.jpg", "bottom.jpg", "right.jpg", "left.jpg"}, 2);
+    textureManager->LoadCubeMap("cube", {"cube.jpg"}, 1);
+    textureManager->LoadCubeMap("active-box", {"transparent-box.png"}, 2);
     shader->setUniform("u_flatTexture", 0);
     shader->setUniform("u_cubeTexture", 1);
 
@@ -107,14 +110,8 @@ int Application::run() {
     bool illuminate = false;
     float elapsedTime, deltaTime, lastTime, timeSinceLastDrop = 0.0f;
 
-    // Lights
-//    auto lightPos = glm::vec3(15.0f, 2.0f, 1.0f);
-    auto lightManager = LightManager::GetInstance();
+    setupAllLights(1.0f, 0.3f, 0.3f);
 
-    setupAllLights(0.5f, 0.0f, 0.7f);
-//    lightManager->addSpotLight({"spot", lightPos, 0.2f, 0.0f, 0.5f});
-//    lightManager->moveLight("spot", {-15.0f, 0.0f, 0.0f});
-//    shader->uploadSpotlight("spot");
 
     RenderCommands::setClearColor(glm::vec4(0.1f, 0.1f, 0.1f, 1.0f));
     while (!glfwWindowShouldClose(window)) {
@@ -146,7 +143,6 @@ int Application::run() {
             activeBlock.goDown(squares, timeSinceLastDrop);
         }
 
-        removeLines(squares);
 
         if (keyI.isPressed(window)) {
             illuminate = !illuminate;
@@ -158,17 +154,12 @@ int Application::run() {
             shader->setUniform("u_blend", blendTexturesWithColor);
         }
 
+        setLights(shader);
+
         shader->setUniform("u_projection", camera.GetProjectionMatrix());
         shader->setUniform("u_view", camera.GetViewMatrix());
         shader->setUniform("u_cameraPos", camera.GetPosition());
 
-//        shader->setUniform("u_cubeTexture", 2);
-//        shader->setUniform("u_skybox", true);
-//        shader->setUniform("u_view", glm::mat4(glm::mat3(camera.GetViewMatrix())));
-//        skybox.draw(shader);
-//        shader->setUniform("u_skybox", false);
-//        shader->setUniform("u_cubeTexture", 1);
-//        shader->setUniform("u_view", camera.GetViewMatrix());
 
 //      WALLS
         shader->setUniform("u_walls", true);
@@ -201,31 +192,18 @@ int Application::run() {
 
         shader->setUniform("u_walls", false);
 
-
-
         shader->setUniform("u_cubemap", true);
         shader->setUniform("u_cubeTexture", 1);
         drawCubes(squares, cube, shader);
-        shader->setUniform("u_cubeTexture", 3);
+        shader->setUniform("u_cubeTexture", 2);
         activeBlock.draw(shader);
         if (!blendTexturesWithColor)
             activeBlock.draw(shader, true);
         shader->setUniform("u_cubemap", false);
 
 
-        // light
-//        lightManager->setPosition("spot", {2+ 2 * cos(elapsedTime*2), 2 +2 * sin(elapsedTime*2), 5.0f});
-//        shader->uploadSpotlight("spot");
-        cube.setScale({0.25f, 0.25f, 0.25f});
-        setLights(shader);
-//        cube.setTranslation(lightManager->getSpotLight("spot")->m_position);
-//        cube.draw(shader);
 
-//        lightManager->setPosition("spot2", {2+ 2 * cos(elapsedTime*2), 2 +2 * sin(elapsedTime*2), 7.0f});
-//        shader->uploadSpotlight("spot2");
-//        cube.setTranslation(lightManager->getSpotLight("spot2")->m_position);
-//        cube.draw(shader);
-        cube.setScale({1.0f, 1.0f, 1.0f});
+        removeLines(squares);
 
         glfwSwapBuffers(window);
     }
@@ -342,9 +320,9 @@ void Application::setLights(const std::shared_ptr<Shader> &shader) {
     cube.setScale({0.1f, 0.1f, 0.1f});
     float time = glfwGetTime() * 0.5f;
     std::stringstream ss;
-    for (int i = 0; i < 9; i++) {
+    for (int i = 0; i < 10; i++) {
         ss << "spot" << i+1;
-        lightManager->setPosition(ss.str(), {calcLight2DPos(time+i*0.25f), 1.5f+i});
+        lightManager->setPosition(ss.str(), {calcLight2DPos(time), 0.5f+i});
         shader->uploadSpotlight(ss.str());
         ss.str("");
     }
@@ -356,15 +334,15 @@ glm::vec2 Application::calcLight2DPos(float time) {
         time -= 4;
     if (time > 3) {
         time -= 3;
-        return {4.5f, lerp(-0.5f, 4.5f, (time))};
+        return {-0.5f, lerp(4.5f, -0.5f, sstep3(time))};
     } else if (time > 2) {
         time -= 2.0f;
-        return {lerp(-0.5f, 4.5f, (time)), -0.5f};
+        return {lerp(4.5f, -0.5f, sstep3(time)), 4.5f};
     } else if (time > 1) {
         time -= 1.0f;
-        return {-0.5, lerp(4.5f, -0.5f, (time))};
+        return {4.5f, lerp(-0.5f, 4.5f, sstep3(time))};
     } else {
-        return {lerp(4.5f, -0.5f, (time)), 4.5f};
+        return {lerp(-0.5f, 4.5f, sstep3(time)), -0.5f};
     }
 
 }
@@ -380,7 +358,7 @@ float Application::sstep3(float pt) {
 void Application::setupAllLights(float constant, float linear, float quadric) {
     auto lightManager = LightManager::GetInstance();
     std::stringstream ss;
-    for (int i = 1; i < 10; i++) {
+    for (int i = 1; i < 11; i++) {
         ss << "spot" << i;
         lightManager->addSpotLight({ss.str(), constant, linear, quadric});
         ss.str("");

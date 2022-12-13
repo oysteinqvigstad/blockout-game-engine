@@ -7,17 +7,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE glad glfw glm stb TCLAP Engine::GL
 target_compile_definitions(${PROJECT_NAME} PRIVATE STB_IMAGE_IMPLEMENTATION)
 
 # Copy textures to binary directory
-add_custom_command(
-        TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy
-        ${CMAKE_CURRENT_SOURCE_DIR}/resources/textures/floor_texture.png
-        ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/resources/textures/floor_texture.png)
 
-add_custom_command(
-        TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy
-        ${CMAKE_CURRENT_SOURCE_DIR}/resources/textures/cube_texture.png
-        ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/resources/textures/cube_texture.png)
 add_custom_command(
         TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy
@@ -27,14 +17,13 @@ add_custom_command(
 add_custom_command(
         TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy
-        ${CMAKE_CURRENT_SOURCE_DIR}/resources/textures/cube_texture.jpg
-        ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/resources/textures/cube_texture.jpg)
-
+        ${CMAKE_CURRENT_SOURCE_DIR}/resources/textures/walls.jpg
+        ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/resources/textures/walls.jpg)
 add_custom_command(
         TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy
-        ${CMAKE_CURRENT_SOURCE_DIR}/resources/textures/walls.jpg
-        ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/resources/textures/walls.jpg)
+        ${CMAKE_CURRENT_SOURCE_DIR}/resources/textures/cube.jpg
+        ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/resources/textures/cube.jpg)
 
 # Add path as a define in Renderer for TextureManager.cpp
 target_compile_definitions(Renderer PRIVATE

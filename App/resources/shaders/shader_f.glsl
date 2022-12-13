@@ -51,7 +51,7 @@ void main() {
         if (u_cubemap) {
             frag = mix(u_color, texture(u_cubeTexture, vs_position), 0.5);
         } else {
-            frag = mix(vs_color, texture(u_flatTexture, vs_tcoords), 0.9);
+            frag = mix(vs_color, texture(u_flatTexture, vs_tcoords), 0.5);
         }
     } else {
         if (u_cubemap) {
@@ -87,7 +87,7 @@ vec3 calcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir) {
 
     // specular lighting
     vec3 reflectDirection = reflect(-lightDirection, normal);
-    float spec = pow(max(dot(viewDir, reflectDirection), 0.0), 4);
+    float spec = pow(max(dot(viewDir, reflectDirection), 0.0), 64);
 
     // attenuation
     float distance = length(light.position - fragPos);
