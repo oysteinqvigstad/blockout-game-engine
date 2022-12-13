@@ -166,31 +166,38 @@ int Application::run() {
 //        shader->setUniform("u_cubeTexture", 1);
 //        shader->setUniform("u_view", camera.GetViewMatrix());
 
-        // CUBE
-        shader->setUniform("u_chessBoard_normal", true);
+//      WALLS
+        shader->setUniform("u_walls", true);
 
+        shader->setUniform("u_walls_normal", {0.0f, 0.0f, 1.0f});
         tunnelFarSide.draw(shader);
 
         // left
+        shader->setUniform("u_walls_normal", {1.0f, 0.0f, 0.0f});
         tunnelSideWall.setRotation({0.0f, 1.0f, 0.0f}, -90);
         tunnelSideWall.setTranslation({-0.5f, 2.0f, 4.5f});
         tunnelSideWall.draw(shader);
 
         // right
+        shader->setUniform("u_walls_normal", {-1.0f, 0.0f, 0.0f});
         tunnelSideWall.setTranslation({4.5f, 2.0f, 4.5f});
         tunnelSideWall.draw(shader);
 
         // top
+        shader->setUniform("u_walls_normal", {0.0f, -1.0f, 0.0f});
         tunnelSideWall.setRotation({0.0f, 0.0f, 1.0f}, 90);
         tunnelSideWall.addRotation({0.0f, 1.0f, 0.0f}, 90);
         tunnelSideWall.setTranslation({2.0f, 4.5f, 4.5f});
         tunnelSideWall.draw(shader);
 
         // bottom
+        shader->setUniform("u_walls_normal", {0.0f, 1.0f, 0.0f});
         tunnelSideWall.setTranslation({2.0f, -0.5f, 4.5f});
         tunnelSideWall.draw(shader);
 
-        shader->setUniform("u_chessBoard_normal", false);
+        shader->setUniform("u_walls", false);
+
+
 
         shader->setUniform("u_cubemap", true);
         shader->setUniform("u_cubeTexture", 1);
@@ -202,7 +209,7 @@ int Application::run() {
 
 
         // light
-        lightManager->setPosition("spot", {2+ 3.5 * cos(elapsedTime), 2 +3.5 * sin(elapsedTime), 5.0f});
+        lightManager->setPosition("spot", {2+ 2 * cos(elapsedTime), 2 +2 * sin(elapsedTime), 5.0f});
         shader->uploadSpotlight("spot");
         cube.setTranslation(lightManager->getSpotLight("spot")->m_position);
         cube.setScale({0.25f, 0.25f, 0.25f});
