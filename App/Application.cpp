@@ -341,44 +341,13 @@ void Application::setLights(const std::shared_ptr<Shader> &shader) {
                              {ShaderDataType::Float3, "normals"}}));
     cube.setScale({0.1f, 0.1f, 0.1f});
     float time = glfwGetTime() * 0.5f;
-    lightManager->setPosition("spot1", {calcLight2DPos(time), 1.5f});
-    lightManager->setPosition("spot2", {calcLight2DPos(time+0.25f), 2.5f});
-    lightManager->setPosition("spot3", {calcLight2DPos(time+0.50f), 3.5f});
-    lightManager->setPosition("spot4", {calcLight2DPos(time+0.75f), 4.5f});
-    lightManager->setPosition("spot5", {calcLight2DPos(time+1.00f), 5.5f});
-    lightManager->setPosition("spot6", {calcLight2DPos(time+1.25f), 6.5f});
-    lightManager->setPosition("spot7", {calcLight2DPos(time+1.50f), 7.5f});
-    lightManager->setPosition("spot8", {calcLight2DPos(time+1.75f), 8.5f});
-    lightManager->setPosition("spot9", {calcLight2DPos(time+2.00f), 9.5f});
-    shader->uploadSpotlight("spot1");
-    shader->uploadSpotlight("spot2");
-    shader->uploadSpotlight("spot3");
-    shader->uploadSpotlight("spot4");
-    shader->uploadSpotlight("spot5");
-    shader->uploadSpotlight("spot6");
-    shader->uploadSpotlight("spot7");
-    shader->uploadSpotlight("spot8");
-    shader->uploadSpotlight("spot9");
-//    cube.setTranslation(lightManager->getSpotLight("spot1")->m_position);
-//    cube.draw(shader);
-//    cube.setTranslation(lightManager->getSpotLight("spot2")->m_position);
-//    cube.draw(shader);
-//    cube.setTranslation(lightManager->getSpotLight("spot3")->m_position);
-//    cube.draw(shader);
-//    cube.setTranslation(lightManager->getSpotLight("spot4")->m_position);
-//    cube.draw(shader);
-//    cube.setTranslation(lightManager->getSpotLight("spot5")->m_position);
-//    cube.draw(shader);
-//    cube.setTranslation(lightManager->getSpotLight("spot6")->m_position);
-//    cube.draw(shader);
-//    cube.setTranslation(lightManager->getSpotLight("spot7")->m_position);
-//    cube.draw(shader);
-//    cube.setTranslation(lightManager->getSpotLight("spot8")->m_position);
-//    cube.draw(shader);
-//    cube.setTranslation(lightManager->getSpotLight("spot9")->m_position);
-//    cube.draw(shader);
-
-
+    std::stringstream ss;
+    for (int i = 0; i < 9; i++) {
+        ss << "spot" << i+1;
+        lightManager->setPosition(ss.str(), {calcLight2DPos(time+i*0.25f), 1.5f+i});
+        shader->uploadSpotlight(ss.str());
+        ss.str("");
+    }
 }
 
 
@@ -410,15 +379,12 @@ float Application::sstep3(float pt) {
 
 void Application::setupAllLights(float constant, float linear, float quadric) {
     auto lightManager = LightManager::GetInstance();
-    lightManager->addSpotLight({"spot1", constant, linear, quadric});
-    lightManager->addSpotLight({"spot2", constant, linear, quadric});
-    lightManager->addSpotLight({"spot3", constant, linear, quadric});
-    lightManager->addSpotLight({"spot4", constant, linear, quadric});
-    lightManager->addSpotLight({"spot5", constant, linear, quadric});
-    lightManager->addSpotLight({"spot6", constant, linear, quadric});
-    lightManager->addSpotLight({"spot7", constant, linear, quadric});
-    lightManager->addSpotLight({"spot8", constant, linear, quadric});
-    lightManager->addSpotLight({"spot9", constant, linear, quadric});
+    std::stringstream ss;
+    for (int i = 1; i < 10; i++) {
+        ss << "spot" << i;
+        lightManager->addSpotLight({ss.str(), constant, linear, quadric});
+        ss.str("");
+    }
 }
 
 
