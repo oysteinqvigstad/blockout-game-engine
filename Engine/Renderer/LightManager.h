@@ -18,12 +18,16 @@ public:
         float m_constant;
         float m_linear;
         float m_quadratic;
-        Spotlight(std::string name, glm::vec3 pos, float constant, float linear, float quad,
-                  glm::vec3 amb = {1.0, 1.0, 1.0}, glm::vec3 diff = {1.0, 1.0, 1.0},
-                  glm::vec3 spec = {1.0, 1.0, 1.0})
-                : m_name(std::move(name)), m_position(pos), m_ambient(amb), m_diffuse(diff),
-                  m_specular(spec), m_constant(constant), m_linear(linear), m_quadratic(quad) {};
+//        Spotlight(std::string name, glm::vec3 pos, float constant, float linear, float quad,
+//                  glm::vec3 amb = {1.0, 1.0, 1.0}, glm::vec3 diff = {1.0, 1.0, 1.0},
+//                  glm::vec3 spec = {1.0, 1.0, 1.0})
+//                : m_name(std::move(name)), m_position(pos), m_ambient(amb), m_diffuse(diff),
+//                  m_specular(spec), m_constant(constant), m_linear(linear), m_quadratic(quad) {};
+        Spotlight(std::string name, float constant, float linear, float quad, glm::vec3 color = {1.0f, 1.0f, 1.0f})
+                : m_name(std::move(name)), m_position(1.0f), m_ambient(color), m_diffuse(color), m_specular(color),
+                  m_constant(constant), m_linear(linear), m_quadratic(quad) {};
     };
+
 
 private:
     inline static LightManager* m_instance = nullptr;

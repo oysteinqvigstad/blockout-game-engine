@@ -108,12 +108,13 @@ int Application::run() {
     float elapsedTime, deltaTime, lastTime, timeSinceLastDrop = 0.0f;
 
     // Lights
-    auto lightPos = glm::vec3(15.0f, 2.0f, 1.0f);
+//    auto lightPos = glm::vec3(15.0f, 2.0f, 1.0f);
     auto lightManager = LightManager::GetInstance();
-    lightManager->addSpotLight({"spot", lightPos, 3.0f, 0.0f, 0.0f});
-    lightManager->addSpotLight({"spot2", lightPos, 3.0f, 0.0f, 0.0f});
-    lightManager->moveLight("spot", {-15.0f, 0.0f, 0.0f});
-    shader->uploadSpotlight("spot");
+
+    setupAllLights(0.5f, 0.0f, 0.7f);
+//    lightManager->addSpotLight({"spot", lightPos, 0.2f, 0.0f, 0.5f});
+//    lightManager->moveLight("spot", {-15.0f, 0.0f, 0.0f});
+//    shader->uploadSpotlight("spot");
 
     RenderCommands::setClearColor(glm::vec4(0.1f, 0.1f, 0.1f, 1.0f));
     while (!glfwWindowShouldClose(window)) {
@@ -212,18 +213,18 @@ int Application::run() {
         shader->setUniform("u_cubemap", false);
 
 
-
         // light
-        lightManager->setPosition("spot", {2+ 2 * cos(elapsedTime*2), 2 +2 * sin(elapsedTime*2), 5.0f});
-        shader->uploadSpotlight("spot");
-        cube.setTranslation(lightManager->getSpotLight("spot")->m_position);
+//        lightManager->setPosition("spot", {2+ 2 * cos(elapsedTime*2), 2 +2 * sin(elapsedTime*2), 5.0f});
+//        shader->uploadSpotlight("spot");
         cube.setScale({0.25f, 0.25f, 0.25f});
-        cube.draw(shader);
+        setLights(shader);
+//        cube.setTranslation(lightManager->getSpotLight("spot")->m_position);
+//        cube.draw(shader);
 
-        lightManager->setPosition("spot2", {2+ 2 * cos(elapsedTime*2), 2 +2 * sin(elapsedTime*2), 7.0f});
-        shader->uploadSpotlight("spot2");
-        cube.setTranslation(lightManager->getSpotLight("spot2")->m_position);
-        cube.draw(shader);
+//        lightManager->setPosition("spot2", {2+ 2 * cos(elapsedTime*2), 2 +2 * sin(elapsedTime*2), 7.0f});
+//        shader->uploadSpotlight("spot2");
+//        cube.setTranslation(lightManager->getSpotLight("spot2")->m_position);
+//        cube.draw(shader);
         cube.setScale({1.0f, 1.0f, 1.0f});
 
         glfwSwapBuffers(window);
@@ -330,6 +331,94 @@ void Application::removeLines(bool squares[10][5][5]) {
     }
     if (oldScore != score)
         std::cout << "Score: " << score << std::endl;
+}
+
+void Application::setLights(const std::shared_ptr<Shader> &shader) {
+    auto lightManager = LightManager::GetInstance();
+    Model cube(GeometricTools::UnitCube3D24WNormals,
+               GeometricTools::UnitCube3DTopologyTriangles24,
+               BufferLayout({{ShaderDataType::Float3, "position"},
+                             {ShaderDataType::Float3, "normals"}}));
+    cube.setScale({0.1f, 0.1f, 0.1f});
+    float time = glfwGetTime() * 0.5f;
+    lightManager->setPosition("spot1", {calcLight2DPos(time), 1.5f});
+    lightManager->setPosition("spot2", {calcLight2DPos(time+0.25f), 2.5f});
+    lightManager->setPosition("spot3", {calcLight2DPos(time+0.50f), 3.5f});
+    lightManager->setPosition("spot4", {calcLight2DPos(time+0.75f), 4.5f});
+    lightManager->setPosition("spot5", {calcLight2DPos(time+1.00f), 5.5f});
+    lightManager->setPosition("spot6", {calcLight2DPos(time+1.25f), 6.5f});
+    lightManager->setPosition("spot7", {calcLight2DPos(time+1.50f), 7.5f});
+    lightManager->setPosition("spot8", {calcLight2DPos(time+1.75f), 8.5f});
+    lightManager->setPosition("spot9", {calcLight2DPos(time+2.00f), 9.5f});
+    shader->uploadSpotlight("spot1");
+    shader->uploadSpotlight("spot2");
+    shader->uploadSpotlight("spot3");
+    shader->uploadSpotlight("spot4");
+    shader->uploadSpotlight("spot5");
+    shader->uploadSpotlight("spot6");
+    shader->uploadSpotlight("spot7");
+    shader->uploadSpotlight("spot8");
+    shader->uploadSpotlight("spot9");
+//    cube.setTranslation(lightManager->getSpotLight("spot1")->m_position);
+//    cube.draw(shader);
+//    cube.setTranslation(lightManager->getSpotLight("spot2")->m_position);
+//    cube.draw(shader);
+//    cube.setTranslation(lightManager->getSpotLight("spot3")->m_position);
+//    cube.draw(shader);
+//    cube.setTranslation(lightManager->getSpotLight("spot4")->m_position);
+//    cube.draw(shader);
+//    cube.setTranslation(lightManager->getSpotLight("spot5")->m_position);
+//    cube.draw(shader);
+//    cube.setTranslation(lightManager->getSpotLight("spot6")->m_position);
+//    cube.draw(shader);
+//    cube.setTranslation(lightManager->getSpotLight("spot7")->m_position);
+//    cube.draw(shader);
+//    cube.setTranslation(lightManager->getSpotLight("spot8")->m_position);
+//    cube.draw(shader);
+//    cube.setTranslation(lightManager->getSpotLight("spot9")->m_position);
+//    cube.draw(shader);
+
+
+}
+
+
+glm::vec2 Application::calcLight2DPos(float time) {
+    while (time > 4.0f)
+        time -= 4;
+    if (time > 3) {
+        time -= 3;
+        return {4.5f, lerp(-0.5f, 4.5f, (time))};
+    } else if (time > 2) {
+        time -= 2.0f;
+        return {lerp(-0.5f, 4.5f, (time)), -0.5f};
+    } else if (time > 1) {
+        time -= 1.0f;
+        return {-0.5, lerp(4.5f, -0.5f, (time))};
+    } else {
+        return {lerp(4.5f, -0.5f, (time)), 4.5f};
+    }
+
+}
+
+float Application::lerp(float start, float end, float pt) {
+    return (1.0f - pt) * start + pt * end;
+}
+
+float Application::sstep3(float pt) {
+    return pt * pt * (3.0f - 2.0f * pt);
+}
+
+void Application::setupAllLights(float constant, float linear, float quadric) {
+    auto lightManager = LightManager::GetInstance();
+    lightManager->addSpotLight({"spot1", constant, linear, quadric});
+    lightManager->addSpotLight({"spot2", constant, linear, quadric});
+    lightManager->addSpotLight({"spot3", constant, linear, quadric});
+    lightManager->addSpotLight({"spot4", constant, linear, quadric});
+    lightManager->addSpotLight({"spot5", constant, linear, quadric});
+    lightManager->addSpotLight({"spot6", constant, linear, quadric});
+    lightManager->addSpotLight({"spot7", constant, linear, quadric});
+    lightManager->addSpotLight({"spot8", constant, linear, quadric});
+    lightManager->addSpotLight({"spot9", constant, linear, quadric});
 }
 
 
