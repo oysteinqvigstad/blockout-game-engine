@@ -6,6 +6,7 @@ uniform samplerCube u_cubeTexture;
 uniform sampler2D u_flatTexture;
 
 uniform vec3 u_walls_normal;
+uniform bool u_illuminate = false;
 uniform bool u_skybox = false;
 uniform bool u_blend = false;
 uniform bool u_cubemap;
@@ -41,36 +42,40 @@ uniform int u_numOfSpotlights = 0;
 vec3 calcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir);
 
 void main() {
+    vec4 frag;
     if (u_skybox) {
         color = texture(u_cubeTexture, vs_position);
         return;
     }
     if (u_blend) {
-        vec3 normal;
-        vec4 frag;
         if (u_cubemap) {
-            normal = vs_normal;
             frag = mix(u_color, texture(u_cubeTexture, vs_position), 0.5);
         } else {
-            normal = vs_normal;
-            if (u_walls)
-                normal = u_walls_normal;
             frag = mix(vs_color, texture(u_flatTexture, vs_tcoords), 0.9);
         }
+    } else {
+        if (u_cubemap) {
+            frag = u_color;
+        } else {
+            frag = vs_color;
+        }
+    }
 
+    if (u_illuminate) {
+        vec3 normal = vs_normal;
+        if (u_walls) {
+            normal = u_walls_normal;
+        }
         vec3 viewDir = normalize(u_cameraPos - vs_fragPos);
         vec3 lighting = vec3(0.0, 0.0, 0.0);
         for (int i = 0; i < u_numOfSpotlights; i++) {
             lighting += calcPointLight(u_spotLights[i], normal, vs_fragPos, viewDir);
         }
-        color = vec4(lighting, 1.0) * frag;
-    } else {
-        if (u_cubemap) {
-            color = u_color;
-        } else {
-            color = vs_color;
-        }
+        frag = vec4(lighting, 1.0) * frag;
     }
+
+    color = frag;
+
 }
 
 

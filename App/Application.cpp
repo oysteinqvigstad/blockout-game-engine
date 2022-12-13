@@ -99,10 +99,12 @@ int Application::run() {
     auto keyRight = Keyboard(GLFW_KEY_RIGHT, 350);
     auto keySpace = Keyboard(GLFW_KEY_SPACE, 350);
     auto keyX = Keyboard(GLFW_KEY_X, 350);
+    auto keyI = Keyboard(GLFW_KEY_I, 350);  // Toggles illumination
     auto keyT = Keyboard(GLFW_KEY_T, 500);  // Toggles blending
     auto keyQ = Keyboard(GLFW_KEY_Q);       // Quiting the application
 
     bool blendTexturesWithColor = false;
+    bool illuminate = false;
     float elapsedTime, deltaTime, lastTime, timeSinceLastDrop = 0.0f;
 
     // Lights
@@ -145,7 +147,10 @@ int Application::run() {
 
         removeLines(squares);
 
-
+        if (keyI.isPressed(window)) {
+            illuminate = !illuminate;
+            shader->setUniform("u_illuminate", illuminate);
+        }
 
         if (keyT.isPressed(window)) {
             blendTexturesWithColor = !blendTexturesWithColor;
