@@ -71,8 +71,8 @@ int Application::run() {
 
     // TEXTURES
     auto textureManager = TextureManager::GetInstance();
-    textureManager->LoadTexture2D("floor", "floor_texture.png", 0);
-    textureManager->LoadCubeMap("cube", {"cube_texture.png"}, 1);
+    textureManager->LoadTexture2D("floor", "walls.jpg", 0);
+    textureManager->LoadCubeMap("cube", {"cube_texture.jpg"}, 1);
     textureManager->LoadCubeMap("active-box", {"transparent-box.png"}, 3);
     textureManager->LoadCubeMap("skybox", {"front.jpg", "back.jpg", "top.jpg", "bottom.jpg", "right.jpg", "left.jpg"}, 2);
     shader->setUniform("u_flatTexture", 0);
