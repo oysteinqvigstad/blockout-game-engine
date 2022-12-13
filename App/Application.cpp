@@ -108,12 +108,13 @@ int Application::run() {
     float elapsedTime, deltaTime, lastTime, timeSinceLastDrop = 0.0f;
 
     // Lights
-    auto lightPos = glm::vec3(15.0f, 2.0f, 1.0f);
+//    auto lightPos = glm::vec3(15.0f, 2.0f, 1.0f);
     auto lightManager = LightManager::GetInstance();
-    lightManager->addSpotLight({"spot", lightPos, 3.0f, 0.0f, 0.0f});
-    lightManager->addSpotLight({"spot2", lightPos, 3.0f, 0.0f, 0.0f});
-    lightManager->moveLight("spot", {-15.0f, 0.0f, 0.0f});
-    shader->uploadSpotlight("spot");
+
+    setupAllLights(0.5f, 0.0f, 0.7f);
+//    lightManager->addSpotLight({"spot", lightPos, 0.2f, 0.0f, 0.5f});
+//    lightManager->moveLight("spot", {-15.0f, 0.0f, 0.0f});
+//    shader->uploadSpotlight("spot");
 
     RenderCommands::setClearColor(glm::vec4(0.1f, 0.1f, 0.1f, 1.0f));
     while (!glfwWindowShouldClose(window)) {
@@ -212,18 +213,18 @@ int Application::run() {
         shader->setUniform("u_cubemap", false);
 
 
-
         // light
-        lightManager->setPosition("spot", {2+ 2 * cos(elapsedTime*2), 2 +2 * sin(elapsedTime*2), 5.0f});
-        shader->uploadSpotlight("spot");
-        cube.setTranslation(lightManager->getSpotLight("spot")->m_position);
+//        lightManager->setPosition("spot", {2+ 2 * cos(elapsedTime*2), 2 +2 * sin(elapsedTime*2), 5.0f});
+//        shader->uploadSpotlight("spot");
         cube.setScale({0.25f, 0.25f, 0.25f});
-        cube.draw(shader);
+        setLights(shader);
+//        cube.setTranslation(lightManager->getSpotLight("spot")->m_position);
+//        cube.draw(shader);
 
-        lightManager->setPosition("spot2", {2+ 2 * cos(elapsedTime*2), 2 +2 * sin(elapsedTime*2), 7.0f});
-        shader->uploadSpotlight("spot2");
-        cube.setTranslation(lightManager->getSpotLight("spot2")->m_position);
-        cube.draw(shader);
+//        lightManager->setPosition("spot2", {2+ 2 * cos(elapsedTime*2), 2 +2 * sin(elapsedTime*2), 7.0f});
+//        shader->uploadSpotlight("spot2");
+//        cube.setTranslation(lightManager->getSpotLight("spot2")->m_position);
+//        cube.draw(shader);
         cube.setScale({1.0f, 1.0f, 1.0f});
 
         glfwSwapBuffers(window);
@@ -330,6 +331,60 @@ void Application::removeLines(bool squares[10][5][5]) {
     }
     if (oldScore != score)
         std::cout << "Score: " << score << std::endl;
+}
+
+void Application::setLights(const std::shared_ptr<Shader> &shader) {
+    auto lightManager = LightManager::GetInstance();
+    Model cube(GeometricTools::UnitCube3D24WNormals,
+               GeometricTools::UnitCube3DTopologyTriangles24,
+               BufferLayout({{ShaderDataType::Float3, "position"},
+                             {ShaderDataType::Float3, "normals"}}));
+    cube.setScale({0.1f, 0.1f, 0.1f});
+    float time = glfwGetTime() * 0.5f;
+    std::stringstream ss;
+    for (int i = 0; i < 9; i++) {
+        ss << "spot" << i+1;
+        lightManager->setPosition(ss.str(), {calcLight2DPos(time+i*0.25f), 1.5f+i});
+        shader->uploadSpotlight(ss.str());
+        ss.str("");
+    }
+}
+
+
+glm::vec2 Application::calcLight2DPos(float time) {
+    while (time > 4.0f)
+        time -= 4;
+    if (time > 3) {
+        time -= 3;
+        return {4.5f, lerp(-0.5f, 4.5f, (time))};
+    } else if (time > 2) {
+        time -= 2.0f;
+        return {lerp(-0.5f, 4.5f, (time)), -0.5f};
+    } else if (time > 1) {
+        time -= 1.0f;
+        return {-0.5, lerp(4.5f, -0.5f, (time))};
+    } else {
+        return {lerp(4.5f, -0.5f, (time)), 4.5f};
+    }
+
+}
+
+float Application::lerp(float start, float end, float pt) {
+    return (1.0f - pt) * start + pt * end;
+}
+
+float Application::sstep3(float pt) {
+    return pt * pt * (3.0f - 2.0f * pt);
+}
+
+void Application::setupAllLights(float constant, float linear, float quadric) {
+    auto lightManager = LightManager::GetInstance();
+    std::stringstream ss;
+    for (int i = 1; i < 10; i++) {
+        ss << "spot" << i;
+        lightManager->addSpotLight({ss.str(), constant, linear, quadric});
+        ss.str("");
+    }
 }
 
 

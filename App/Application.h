@@ -28,6 +28,11 @@ private:
     void setUniformAllShaders(const std::string &str, T value);
     void drawCubes(bool squares[10][5][5], Model cube, const std::shared_ptr<Shader> &shader);
     void removeLines(bool squares[10][5][5]);
+    void setLights(const std::shared_ptr<Shader> &shader);
+    void setupAllLights(float constant, float linear, float quadric);
+    float lerp(float start, float end, float pt);
+    float sstep3(float dt);
+    glm::vec2 calcLight2DPos(float time);
 public:
     Application(const std::string& name, const std::string& version);
     void parseArguments(int argc, char **argv) override;
