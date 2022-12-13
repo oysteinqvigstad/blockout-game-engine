@@ -97,13 +97,12 @@ int Application::run() {
     auto keyDown = Keyboard(GLFW_KEY_DOWN, 350);
     auto keyLeft = Keyboard(GLFW_KEY_LEFT, 350);
     auto keyRight = Keyboard(GLFW_KEY_RIGHT, 350);
-    auto keyEnter = Keyboard(GLFW_KEY_ENTER, 350);
     auto keySpace = Keyboard(GLFW_KEY_SPACE, 350);
     auto keyX = Keyboard(GLFW_KEY_X, 350);
     auto keyT = Keyboard(GLFW_KEY_T, 500);  // Toggles blending
     auto keyQ = Keyboard(GLFW_KEY_Q);       // Quiting the application
 
-    bool blendTexturesWithColor = true;
+    bool blendTexturesWithColor = false;
     float elapsedTime, deltaTime, lastTime, timeSinceLastDrop = 0.0f;
 
     // Lights
@@ -147,8 +146,6 @@ int Application::run() {
         removeLines(squares);
 
 
-        if (keyEnter.isPressed(window))
-            activateSelector(chessPieces);
 
         if (keyT.isPressed(window)) {
             blendTexturesWithColor = !blendTexturesWithColor;
@@ -205,6 +202,8 @@ int Application::run() {
         drawCubes(squares, cube, shader);
         shader->setUniform("u_cubeTexture", 3);
         activeBlock.draw(shader);
+        if (!blendTexturesWithColor)
+            activeBlock.draw(shader, true);
         shader->setUniform("u_cubemap", false);
 
 
@@ -273,16 +272,16 @@ void Application::drawCubes(bool (*squares)[5][5],
                             Model cube,
                             const std::shared_ptr<Shader> &shader) {
 
-    glm::vec3 colors[10] = {{1.0f, 0.0f, 0.0f},
-                            {0.0f, 1.0f, 0.0f},
-                            {0.0f, 0.0f, 1.0f},
-                            {1.0f, 0.0f, 0.0f},
-                            {0.0f, 1.0f, 0.0f},
-                            {0.0f, 0.0f, 1.0f},
-                            {1.0f, 0.0f, 0.0f},
-                            {0.0f, 1.0f, 0.0f},
-                            {0.0f, 0.0f, 1.0f},
-                            {1.0f, 0.0f, 0.0f}};
+    glm::vec4 colors[10] = {{1.0f, 0.0f, 0.0f, 1.0f},
+                            {0.0f, 1.0f, 0.0f, 1.0f},
+                            {0.0f, 0.0f, 1.0f, 1.0f},
+                            {1.0f, 0.0f, 0.0f, 1.0f},
+                            {0.0f, 1.0f, 0.0f, 1.0f},
+                            {0.0f, 0.0f, 1.0f, 1.0f},
+                            {1.0f, 0.0f, 0.0f, 1.0f},
+                            {0.0f, 1.0f, 0.0f, 1.0f},
+                            {0.0f, 0.0f, 1.0f, 1.0f},
+                            {1.0f, 0.0f, 0.0f, 1.0f}};
 
     for (int i = 0; i < 10; i++) {
         for (int j = 0; j < 5; j++) {

@@ -22,7 +22,7 @@ public:
     void generate();
     void moveSideways(const bool squares[10][5][5], int x, int y);
     bool goDown(bool squares[10][5][5], float &timer, bool completely = false);
-    void draw(const std::shared_ptr<Shader> &shader);
+    void draw(const std::shared_ptr<Shader> &shader, bool wireframe = false);
     bool hasCollided(const bool squares[10][5][5]);
     void addBlockToBoard(bool squares[10][5][5]);
 

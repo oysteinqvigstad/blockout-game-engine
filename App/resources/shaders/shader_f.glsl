@@ -7,7 +7,7 @@ uniform sampler2D u_flatTexture;
 
 uniform vec3 u_walls_normal;
 uniform bool u_skybox = false;
-uniform bool u_blend = true;
+uniform bool u_blend = false;
 uniform bool u_cubemap;
 uniform vec3 u_cameraPos;
 uniform float u_ambientStrength = 1.0f;
@@ -15,7 +15,7 @@ uniform float u_specularStrength = 1.0f;
 uniform float u_diffuseStrength = 1.0f;
 uniform bool u_walls = false;
 
-uniform vec3 u_color;
+uniform vec4 u_color;
 flat in vec4 vs_color;
 
 in vec3 vs_position;
@@ -50,7 +50,7 @@ void main() {
         vec4 frag;
         if (u_cubemap) {
             normal = vs_normal;
-            frag = mix(vec4(u_color, 1.0), texture(u_cubeTexture, vs_position), 0.5);
+            frag = mix(u_color, texture(u_cubeTexture, vs_position), 0.5);
         } else {
             normal = vs_normal;
             if (u_walls)
@@ -65,7 +65,11 @@ void main() {
         }
         color = vec4(lighting, 1.0) * frag;
     } else {
-        color = vec4(u_color, 1.0);
+        if (u_cubemap) {
+            color = u_color;
+        } else {
+            color = vs_color;
+        }
     }
 }
 
