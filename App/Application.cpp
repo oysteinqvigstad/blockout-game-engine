@@ -102,7 +102,7 @@ int Application::run() {
     auto keyT = Keyboard(GLFW_KEY_T, 500);  // Toggles blending
     auto keyQ = Keyboard(GLFW_KEY_Q);       // Quiting the application
 
-    bool blendTexturesWithColor = true;
+    bool blendTexturesWithColor = false;
     float elapsedTime, deltaTime, lastTime, timeSinceLastDrop = 0.0f;
 
     // Lights

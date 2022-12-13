@@ -7,7 +7,7 @@ uniform sampler2D u_flatTexture;
 
 uniform vec3 u_walls_normal;
 uniform bool u_skybox = false;
-uniform bool u_blend = true;
+uniform bool u_blend = false;
 uniform bool u_cubemap;
 uniform vec3 u_cameraPos;
 uniform float u_ambientStrength = 1.0f;
