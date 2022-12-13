@@ -37,62 +37,53 @@ int Application::run() {
     numSquares[0] = row;
     numSquares[1] = col;
 
-    // SHADERS
-    auto shader = std::make_shared<Shader>(vertexShaderSrc, shader_f);
-    shader->setUniform("u_specularStrength", 2.0f);
-    shader->setUniform("u_diffuseStrength", 1.0f);
-    shader->setUniform("u_ambientStrength", 0.8f);
-
     // SETTING UP CAMERA
     PerspectiveCamera camera({80.0f, static_cast<float>(winWidth), static_cast<float>(winHeight), 1.0f, -10.0f}, {2.0f, 2.0f, 12.4f}, {2.0f, 2.0f, 0.0f});
 
+
+    // MODELS
     Model tunnelFarSide(GeometricTools::UnitGridGeometry3DWTCoords<5, 5>(),
                         GeometricTools::UnitGridTopologyTriangles<5, 5>(),
                         BufferLayout({{ShaderDataType::Float3, "position"},
                              {ShaderDataType::Float3, "color"},
                              {ShaderDataType::Float2, "texture"}}));
-    tunnelFarSide.setScale({5.0f, 5.0f, 5.0f});
-    tunnelFarSide.setTranslation({2.0f, 2.0f, -0.5f});
-
     Model tunnelSideWall(GeometricTools::UnitGridGeometry3DWTCoords<10, 5>(),
                          GeometricTools::UnitGridTopologyTriangles<10, 5>(),
                          BufferLayout({{ShaderDataType::Float3, "position"},
-                                      {ShaderDataType::Float3, "color"},
-                                      {ShaderDataType::Float2, "texture"}}));
-    tunnelSideWall.setScale({10.0f, 5.0f, 5.0f});
-
-
-
-    Model skybox(GeometricTools::UnitCube3D24WNormals,
-                 GeometricTools::UnitCube3DTopologyTriangles24,
-                 BufferLayout({{ShaderDataType::Float3, "position"},
-                               {ShaderDataType::Float3, "normals"}}));
-    skybox.setScale({100.0f, 100.0f, 100.0f});
-    skybox.setTranslation({0.0f, -20.0f, 0.0f});
-
-    ActiveBlock activeBlock;
-
-    // TEXTURES
-    auto textureManager = TextureManager::GetInstance();
-//    textureManager->LoadTexture2D("floor", "walls.jpg", 0);
-    textureManager->LoadTexture2D("floor", "walls.jpg", 0);
-    textureManager->LoadCubeMap("cube", {"cube.jpg"}, 1);
-    textureManager->LoadCubeMap("active-box", {"transparent-box.png"}, 2);
-    shader->setUniform("u_flatTexture", 0);
-    shader->setUniform("u_cubeTexture", 1);
-
-
-    // Cube
-    auto chessPieces = GeometricTools::createPieces<row, col>();
+                                       {ShaderDataType::Float3, "color"},
+                                       {ShaderDataType::Float2, "texture"}}));
     Model cube(GeometricTools::UnitCube3D24WNormals,
                GeometricTools::UnitCube3DTopologyTriangles24,
                BufferLayout({{ShaderDataType::Float3, "position"},
                              {ShaderDataType::Float3, "normals"}}));
 
-    cube.setScale({1.0f, 1.0f, 1.0f});
-    bool squares[10][5][5] = {};
+
+    tunnelFarSide.setScale({5.0f, 5.0f, 5.0f});
+    tunnelFarSide.setTranslation({2.0f, 2.0f, -0.5f});
+    tunnelSideWall.setScale({10.0f, 5.0f, 5.0f});
 
 
+
+
+
+    ActiveBlock activeBlock;
+
+    // TEXTURES
+    auto textureManager = TextureManager::GetInstance();
+    textureManager->LoadTexture2D("wall", "walls.jpg", 0);
+    textureManager->LoadCubeMap("cube", {"cube.jpg"}, 1);
+    textureManager->LoadCubeMap("active-box", {"transparent-box.png"}, 2);
+
+    // SHADERS
+    auto shader = std::make_shared<Shader>(vertexShaderSrc, shader_f);
+    shader->setUniform("u_specularStrength", 3.0f);
+    shader->setUniform("u_diffuseStrength", 1.0f);
+    shader->setUniform("u_ambientStrength", 1.0f);
+    shader->setUniform("u_projection", camera.GetProjectionMatrix());
+    shader->setUniform("u_view", camera.GetViewMatrix());
+    shader->setUniform("u_cameraPos", camera.GetPosition());
+    shader->setUniform("u_flatTexture", textureManager->GetUnitByName("wall"));
+    shader->setUniform("u_cubeTexture", textureManager->GetUnitByName("cube"));
 
     // KEYBOARD
     auto keyEsc = Keyboard(GLFW_KEY_ESCAPE);
@@ -109,6 +100,7 @@ int Application::run() {
     bool blendTexturesWithColor = false;
     bool illuminate = false;
     float elapsedTime, deltaTime, lastTime, timeSinceLastDrop = 0.0f;
+    bool squares[10][5][5] = {};
 
     setupAllLights(1.0f, 0.3f, 0.3f);
 
@@ -156,9 +148,6 @@ int Application::run() {
 
         setLights(shader);
 
-        shader->setUniform("u_projection", camera.GetProjectionMatrix());
-        shader->setUniform("u_view", camera.GetViewMatrix());
-        shader->setUniform("u_cameraPos", camera.GetPosition());
 
 
 //      WALLS
@@ -256,16 +245,16 @@ void Application::drawCubes(bool (*squares)[5][5],
                             Model cube,
                             const std::shared_ptr<Shader> &shader) {
 
-    glm::vec4 colors[10] = {{1.0f, 0.0f, 0.0f, 1.0f},
-                            {0.0f, 1.0f, 0.0f, 1.0f},
-                            {0.0f, 0.0f, 1.0f, 1.0f},
-                            {1.0f, 0.0f, 0.0f, 1.0f},
-                            {0.0f, 1.0f, 0.0f, 1.0f},
-                            {0.0f, 0.0f, 1.0f, 1.0f},
-                            {1.0f, 0.0f, 0.0f, 1.0f},
-                            {0.0f, 1.0f, 0.0f, 1.0f},
-                            {0.0f, 0.0f, 1.0f, 1.0f},
-                            {1.0f, 0.0f, 0.0f, 1.0f}};
+    glm::vec4 colors[10] = {{1.0f, 0.1f, 0.1f, 1.0f},
+                            {0.1f, 1.0f, 0.1f, 1.0f},
+                            {0.1f, 0.1f, 1.0f, 1.0f},
+                            {1.0f, 0.1f, 0.1f, 1.0f},
+                            {0.1f, 1.0f, 0.1f, 1.0f},
+                            {0.1f, 0.1f, 1.0f, 1.0f},
+                            {1.0f, 0.1f, 0.1f, 1.0f},
+                            {0.1f, 1.0f, 0.1f, 1.0f},
+                            {0.1f, 0.1f, 1.0f, 1.0f},
+                            {1.0f, 0.1f, 0.1f, 1.0f}};
 
     for (int i = 0; i < 10; i++) {
         for (int j = 0; j < 5; j++) {

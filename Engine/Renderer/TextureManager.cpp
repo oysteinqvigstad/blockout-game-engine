@@ -77,7 +77,7 @@ bool TextureManager::LoadCubeMap(const std::string& name, const std::vector<std:
 }
 
 
-GLuint TextureManager::GetUnitByName(const std::string& name) const
+GLint TextureManager::GetUnitByName(const std::string& name) const
 {
     for(const auto& texture: this->Textures)
     {

@@ -39,7 +39,7 @@ public:
 public:
     bool LoadTexture2D(const std::string& name, const std::string& filename, GLuint unit, bool mipMap= true);
     bool LoadCubeMap(const std::string& name, const std::vector<std::string>& filenames, GLuint unit, bool mipMap= true);
-    [[nodiscard]] GLuint GetUnitByName(const std::string& name) const;
+    [[nodiscard]] GLint GetUnitByName(const std::string& name) const;
 
 private:
     static unsigned char* LoadTextureImage(const std::string& filepath, int& width, int& height, int& bpp, int format);
