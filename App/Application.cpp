@@ -15,8 +15,6 @@ Application::Application(const std::string &name,
     numSquares{} {
 }
 
-
-
 void Application::parseArguments(int argc, char **argv) {
     GLFWApplication::parseArguments(argc, argv);
 }
@@ -32,10 +30,6 @@ unsigned Application::init() {
 }
 
 int Application::run() {
-    const int row = 5;
-    const int col = 5;
-    numSquares[0] = row;
-    numSquares[1] = col;
 
     // SETTING UP CAMERA
     PerspectiveCamera camera({80.0f, static_cast<float>(winWidth), static_cast<float>(winHeight), 1.0f, -10.0f}, {2.0f, 2.0f, 12.4f}, {2.0f, 2.0f, 0.0f});
@@ -61,9 +55,6 @@ int Application::run() {
     tunnelFarSide.setScale({5.0f, 5.0f, 5.0f});
     tunnelFarSide.setTranslation({2.0f, 2.0f, -0.5f});
     tunnelSideWall.setScale({10.0f, 5.0f, 5.0f});
-
-
-
 
 
     ActiveBlock activeBlock;
@@ -104,20 +95,23 @@ int Application::run() {
 
     setupAllLights(1.0f, 0.3f, 0.3f);
 
-
     RenderCommands::setClearColor(glm::vec4(0.1f, 0.1f, 0.1f, 1.0f));
+
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
         RenderCommands::clear();
 
+        // Update time
         elapsedTime = static_cast<float>(glfwGetTime());
         deltaTime = elapsedTime - lastTime;
         lastTime = elapsedTime;
         timeSinceLastDrop += deltaTime;
 
+        // Close window
         if (keyEsc.isPressed(window) || keyQ.isPressed(window))
             glfwSetWindowShouldClose(window, GLFW_TRUE);
 
+        // Move active block in 2D
         if (keyUp.isPressed(window))
             activeBlock.moveSideways(squares, 0, 1);
         if (keyDown.isPressed(window))
@@ -126,33 +120,37 @@ int Application::run() {
             activeBlock.moveSideways(squares, -1, 0);
         if (keyRight.isPressed(window))
             activeBlock.moveSideways(squares, 1, 0);
+
+        // Move active block one tile down
         if (keyX.isPressed(window))
             activeBlock.goDown(squares, timeSinceLastDrop);
+
+        // Move active block all the way down
         if (keySpace.isPressed(window))
             activeBlock.goDown(squares, timeSinceLastDrop, true);
 
+        // Automatically move active block down
         if (timeSinceLastDrop > 2.0f) {
             activeBlock.goDown(squares, timeSinceLastDrop);
         }
 
-
+        // Toggle illumination
         if (keyI.isPressed(window)) {
             illuminate = !illuminate;
             shader->setUniform("u_illuminate", illuminate);
         }
 
+        // Toggle textures
         if (keyT.isPressed(window)) {
             blendTexturesWithColor = !blendTexturesWithColor;
             shader->setUniform("u_blend", blendTexturesWithColor);
         }
 
+        // update all lights
         setLights(shader);
 
-
-
-//      WALLS
+        // WALLS
         shader->setUniform("u_walls", true);
-
         shader->setUniform("u_walls_normal", {0.0f, 0.0f, 1.0f});
         tunnelFarSide.draw(shader);
 
@@ -178,67 +176,24 @@ int Application::run() {
         shader->setUniform("u_walls_normal", {0.0f, 1.0f, 0.0f});
         tunnelSideWall.setTranslation({2.0f, -0.5f, 4.5f});
         tunnelSideWall.draw(shader);
-
         shader->setUniform("u_walls", false);
 
-        shader->setUniform("u_cubemap", true);
-        shader->setUniform("u_cubeTexture", 1);
+        // draw all solid blocks
         drawCubes(squares, cube, shader);
-        shader->setUniform("u_cubeTexture", 2);
+
+        // draw active blocks
+        shader->setUniform("u_cubeTexture", textureManager->GetUnitByName("active-box"));
         activeBlock.draw(shader);
         if (!blendTexturesWithColor)
-            activeBlock.draw(shader, true);
+            activeBlock.draw(shader, true);  // wireframe drawing
         shader->setUniform("u_cubemap", false);
 
-
-
+        // reduce full tetris lines
         removeLines(squares);
 
         glfwSwapBuffers(window);
     }
     return 0;
-}
-
-void Application::moveSelector(int x, int y) {
-    // Calculate new position
-    int newPosX = selectorPos.x + x;
-    int newPosY = selectorPos.y + y;
-    // Check if move is legal
-    if (newPosX < numSquares[0] && newPosX >= 0 &&
-        newPosY < numSquares[1] && newPosY >= 0) {
-
-        // set the color of the current tile
-        std::array<float, 3> white{1.0f, 1.0f, 1.0f};
-        std::array<float, 3> black{0.0f, 0.0f, 0.0f};
-        auto color = ((selectorPos[0] + selectorPos[1]) % 2) ? &white : &black;
-        int stride = 8 * sizeof(float);
-        int offset = 3 * sizeof(float);
-        offset += ((selectorPos.x+1) + selectorPos.y * (numSquares[0]+1)) * stride;
-        glBufferSubData(GL_ARRAY_BUFFER, offset, 3*sizeof(float), color);
-
-        // Update new position
-        selectorPos.x = newPosX;
-        selectorPos.y = newPosY;
-
-        // set color of new tile
-        std::array<float, 3> green {0.0f, 1.0f, 0.0f};
-        offset = 3 * sizeof(float);
-        offset += ((selectorPos.x+1) + selectorPos.y * (numSquares[0]+1)) * stride;
-        glBufferSubData(GL_ARRAY_BUFFER, offset, 3*sizeof(float), green.data());
-
-    }
-}
-
-void Application::activateSelector(std::list<GeometricTools::chessPiece> &pieces) {
-    auto highlightedPiece = std::find_if(pieces.begin(), pieces.end(), [](const auto & piece) { return piece.highlighted; });
-    auto selectPiece = std::find_if(pieces.begin(), pieces.end(), [&](const auto & piece) { return selectorPos == piece.squareNumber; });
-    if (highlightedPiece != pieces.end()) {
-        if (selectPiece == pieces.end())
-            highlightedPiece->squareNumber = selectorPos;
-        highlightedPiece->highlighted = false;
-    } else if (selectPiece != pieces.end()) {
-        selectPiece->highlighted = true;
-    }
 }
 
 void Application::drawCubes(bool (*squares)[5][5],
@@ -255,6 +210,9 @@ void Application::drawCubes(bool (*squares)[5][5],
                             {0.1f, 1.0f, 0.1f, 1.0f},
                             {0.1f, 0.1f, 1.0f, 1.0f},
                             {1.0f, 0.1f, 0.1f, 1.0f}};
+
+    shader->setUniform("u_cubeTexture", TextureManager::GetInstance()->GetUnitByName("cube"));
+    shader->setUniform("u_cubemap", true);
 
     for (int i = 0; i < 10; i++) {
         for (int j = 0; j < 5; j++) {
@@ -353,12 +311,3 @@ void Application::setupAllLights(float constant, float linear, float quadric) {
         ss.str("");
     }
 }
-
-
-template<typename T>
-void Application::setUniformAllShaders(const std::string &str, T value) {
-    for (const auto & shader : allShaders)
-        shader->setUniform(str, value);
-}
-
-
