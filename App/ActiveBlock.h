@@ -14,8 +14,7 @@ private:
     bool tiles[3][3][3];
     bool freeze;
     Model cube;
-
-
+    void rotateMatrix();
     bool checkWallCollision();
 public:
     ActiveBlock();
@@ -25,6 +24,8 @@ public:
     void draw(const std::shared_ptr<Shader> &shader, bool wireframe = false);
     bool hasCollided(const bool squares[10][5][5]);
     void addBlockToBoard(bool squares[10][5][5]);
+    void rotateLeft(bool squares[10][5][5]);
+    void rotateRight(bool squares[10][5][5]);
 
 };
 

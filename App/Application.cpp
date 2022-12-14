@@ -81,7 +81,9 @@ int Application::run() {
     auto keyLeft = Keyboard(GLFW_KEY_LEFT, 350);
     auto keyRight = Keyboard(GLFW_KEY_RIGHT, 350);
     auto keySpace = Keyboard(GLFW_KEY_SPACE, 350);
-    auto keyX = Keyboard(GLFW_KEY_X, 350);
+    auto keyZ = Keyboard(GLFW_KEY_Z, 350);  // Rotate left
+    auto keyX = Keyboard(GLFW_KEY_X, 350);  // Drop down one
+    auto keyC = Keyboard(GLFW_KEY_C, 350);  // Rotate right
     auto keyI = Keyboard(GLFW_KEY_I, 350);  // Toggles illumination
     auto keyT = Keyboard(GLFW_KEY_T, 500);  // Toggles blending
     auto keyQ = Keyboard(GLFW_KEY_Q);       // Quiting the application
@@ -91,6 +93,7 @@ int Application::run() {
     float elapsedTime, deltaTime, lastTime, timeSinceLastDrop = 0.0f;
     bool squares[10][5][5] = {};
 
+    // LIGHTS
     setupAllLights(1.0f, 0.3f, 0.3f);
 
     RenderCommands::setClearColor(glm::vec4(0.1f, 0.1f, 0.1f, 1.0f));
@@ -118,6 +121,10 @@ int Application::run() {
             activeBlock.moveSideways(squares, -1, 0);
         if (keyRight.isPressed(window))
             activeBlock.moveSideways(squares, 1, 0);
+        if (keyZ.isPressed(window))
+            activeBlock.rotateLeft(squares);
+        if (keyC.isPressed(window))
+            activeBlock.rotateRight(squares);
 
         // Move active block one tile down
         if (keyX.isPressed(window))
@@ -276,7 +283,7 @@ float Application::sstep3(float pt) {
 void Application::setupAllLights(float constant, float linear, float quadric) {
     auto lightManager = LightManager::GetInstance();
     std::stringstream ss;
-    for (int i = 1; i < 11; i++) {
+    for (int i = 1; i <= 10; i++) {
         ss << "spot" << i;
         lightManager->addSpotLight({ss.str(), constant, linear, quadric});
         ss.str("");
