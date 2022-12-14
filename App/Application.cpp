@@ -60,8 +60,10 @@ int Application::run() {
     shader->setUniform("u_cameraPos", camera.GetPosition());
 
     // LIGHTS
-    setupAllLights(3.0f, 0.2f, 0.7f);
+    setupAllLights(3.0f, 0.1f, 0.7f);
     shader->setUniform("u_specularStrength", 5.0f);
+    shader->setUniform("u_ambientStrength", 1.0f);
+    shader->setUniform("u_diffuseStrength", 2.0f);
 
     // TEXTURES
     auto textureManager = TextureManager::GetInstance();
