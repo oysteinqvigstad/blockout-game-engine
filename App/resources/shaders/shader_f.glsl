@@ -2,29 +2,20 @@ const std::string shader_f = R"(
 #version 430 core
 #define MAX_SPOTLIGHTS 10
 
+// SAMPLERS
 uniform samplerCube u_cubeTexture;
 uniform sampler2D u_flatTexture;
-
-uniform vec3 u_walls_normal;
-uniform bool u_illuminate = false;
-uniform bool u_skybox = false;
 uniform bool u_blend = false;
+
+// ILLUMINATION
+uniform bool u_illuminate = false;
 uniform bool u_cubemap;
 uniform vec3 u_cameraPos;
 uniform float u_ambientStrength = 1.0f;
 uniform float u_specularStrength = 1.0f;
 uniform float u_diffuseStrength = 1.0f;
-uniform bool u_walls = false;
 
-uniform vec4 u_color;
-flat in vec4 vs_color;
-
-in vec3 vs_position;
-in vec2 vs_tcoords;
-in vec3 vs_normal;
-in vec3 vs_fragPos;
-out vec4 color;
-
+// LIGHTS
 struct PointLight {
     vec3 position;
     vec3 ambient;
@@ -34,19 +25,28 @@ struct PointLight {
     float linear;
     float quadratic;
 };
-
 uniform PointLight lights;
 uniform PointLight u_spotLights[MAX_SPOTLIGHTS];
 uniform int u_numOfSpotlights = 0;
 
+// PRIMITIVES
+uniform bool u_walls = false;
+uniform vec3 u_walls_normal;
+uniform vec4 u_color;
+flat in vec4 vs_color;
+in vec3 vs_position;
+in vec2 vs_tcoords;
+in vec3 vs_normal;
+in vec3 vs_fragPos;
+out vec4 color;
+
+// FUNCTION PROTOTYPES
 vec3 calcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir);
 
 void main() {
-    vec4 frag;
-    if (u_skybox) {
-        color = texture(u_cubeTexture, vs_position);
-        return;
-    }
+    vec4 frag;   // fragment color
+
+    // setting the preliminiary fragment color
     if (u_blend) {
         if (u_cubemap) {
             frag = mix(u_color, texture(u_cubeTexture, vs_position), 0.5);
@@ -61,6 +61,7 @@ void main() {
         }
     }
 
+    // adding illumination from all the individual light sources
     if (u_illuminate) {
         vec3 normal = vs_normal;
         if (u_walls) {
@@ -74,11 +75,12 @@ void main() {
         frag = vec4(lighting, 1.0) * frag;
     }
 
+    // outputting the final color
     color = frag;
 
 }
 
-
+// Calculates the illumination caused by a single light source
 vec3 calcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir) {
 
     // diffuse lighting
