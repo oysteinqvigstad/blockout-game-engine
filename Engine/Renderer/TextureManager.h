@@ -3,7 +3,10 @@
 
 // External libraries
 #include <glad/glad.h>
-#include <stb_image.h>
+#ifndef STB_IMAGE_IMPLEMENTATION
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+#endif
 
 // STD includes
 #include <string>

@@ -29,11 +29,14 @@ unsigned Application::init() {
 
 int Application::run() {
 
-    // SETTING UP CAMERA
-    PerspectiveCamera camera({80.0f, static_cast<float>(winWidth), static_cast<float>(winHeight), 1.0f, -10.0f}, {2.0f, 2.0f, 12.4f}, {2.0f, 2.0f, 0.0f});
+    // CAMERA
+    PerspectiveCamera camera({80.0f, static_cast<float>(winWidth),
+                              static_cast<float>(winHeight), 1.0f, -10.0f},
+                             {2.0f, 2.0f, 12.4f}, {2.0f, 2.0f, 0.0f});
 
 
     // MODELS
+    ActiveBlock activeBlock;
     Model nearWall(GeometricTools::UnitGridGeometry3DWTCoords<5, 5>(),
                    GeometricTools::UnitGridTopologyTriangles<5, 5>(),
                    BufferLayout({{ShaderDataType::Float3, "position"},
@@ -49,71 +52,62 @@ int Application::run() {
                BufferLayout({{ShaderDataType::Float3, "position"},
                              {ShaderDataType::Float3, "normals"}}));
 
+    // LIGHTS
+    setupAllLights(4.0f, 0.0f, 0.4f);
 
-    nearWall.setScale({5.0f, 5.0f, 5.0f});
-    nearWall.setTranslation({2.0f, 2.0f, -0.5f});
-    sideWall.setScale({10.0f, 5.0f, 5.0f});
-
-
-    ActiveBlock activeBlock;
+    // SHADERS
+    auto shader = std::make_shared<Shader>(vertexShaderSrc, shader_f);
+    shader->setUniform("u_specularStrength", 5.0f);
+    shader->setUniform("u_projection", camera.GetProjectionMatrix());
+    shader->setUniform("u_view", camera.GetViewMatrix());
+    shader->setUniform("u_cameraPos", camera.GetPosition());
 
     // TEXTURES
     auto textureManager = TextureManager::GetInstance();
     textureManager->LoadTexture2D("wall", "walls.jpg", 0);
     textureManager->LoadCubeMap("cube", {"cube.jpg"}, 1);
     textureManager->LoadCubeMap("active-box", {"transparent-box.png"}, 2);
-
-    // SHADERS
-    auto shader = std::make_shared<Shader>(vertexShaderSrc, shader_f);
-    shader->setUniform("u_specularStrength", 5.0f);
-    shader->setUniform("u_diffuseStrength", 1.0f);
-    shader->setUniform("u_ambientStrength", 1.0f);
-    shader->setUniform("u_projection", camera.GetProjectionMatrix());
-    shader->setUniform("u_view", camera.GetViewMatrix());
-    shader->setUniform("u_cameraPos", camera.GetPosition());
     shader->setUniform("u_flatTexture", textureManager->GetUnitByName("wall"));
     shader->setUniform("u_cubeTexture", textureManager->GetUnitByName("cube"));
 
     // KEYBOARD
-    auto keyEsc = Keyboard(GLFW_KEY_ESCAPE);
-    auto keyUp = Keyboard(GLFW_KEY_UP, 350);
-    auto keyDown = Keyboard(GLFW_KEY_DOWN, 350);
-    auto keyLeft = Keyboard(GLFW_KEY_LEFT, 350);
-    auto keyRight = Keyboard(GLFW_KEY_RIGHT, 350);
-    auto keySpace = Keyboard(GLFW_KEY_SPACE, 350);
-    auto keyZ = Keyboard(GLFW_KEY_Z, 350);  // Rotate left
-    auto keyX = Keyboard(GLFW_KEY_X, 350);  // Drop down one
-    auto keyC = Keyboard(GLFW_KEY_C, 350);  // Rotate right
-    auto keyI = Keyboard(GLFW_KEY_I, 350);  // Toggles illumination
-    auto keyT = Keyboard(GLFW_KEY_T, 500);  // Toggles blending
-    auto keyQ = Keyboard(GLFW_KEY_Q);       // Quiting the application
+    auto keyEsc = Keyboard(GLFW_KEY_ESCAPE);        // Quit application
+    auto keyQ = Keyboard(GLFW_KEY_Q);               // Quit the application
+    auto keyUp = Keyboard(GLFW_KEY_UP, 350);        // Move up
+    auto keyDown = Keyboard(GLFW_KEY_DOWN, 350);    // Move down
+    auto keyLeft = Keyboard(GLFW_KEY_LEFT, 350);    // Move left
+    auto keyRight = Keyboard(GLFW_KEY_RIGHT, 350);  // Move right
+    auto keyX = Keyboard(GLFW_KEY_X, 350);          // Move inwards
+    auto keySpace = Keyboard(GLFW_KEY_SPACE, 350);  // Move inwards entirely
+    auto keyZ = Keyboard(GLFW_KEY_Z, 350);          // Rotate left
+    auto keyC = Keyboard(GLFW_KEY_C, 350);          // Rotate right
+    auto keyI = Keyboard(GLFW_KEY_I, 350);          // Toggle illumination
+    auto keyT = Keyboard(GLFW_KEY_T, 500);          // Toggle blending
 
-    bool blendTexturesWithColor = false;
-    bool illuminate = false;
+
+    // GAME VARIABLES
+    bool squares[10][5][5] = {};           // true if block occupies space
+    float interpolation[10][5][5] = {};    // >0.0f if block should be animated
+    bool blendTexture = false;             // shader setting
+    bool illuminate = false;               // shader setting
     float elapsedTime, deltaTime, lastTime, timeSinceLastDrop = 0.0f;
-    bool squares[10][5][5] = {};
-    float interpolation[10][5][5] = {};
 
-    // LIGHTS
-    setupAllLights(4.0f, 0.0f, 0.4f);
-
-    RenderCommands::setClearColor(glm::vec4(0.1f, 0.1f, 0.1f, 1.0f));
-
+    // GAME LOOP
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
         RenderCommands::clear();
 
-        // Update time
+        // update time
         elapsedTime = static_cast<float>(glfwGetTime());
         deltaTime = elapsedTime - lastTime;
         lastTime = elapsedTime;
         timeSinceLastDrop += deltaTime;
 
-        // Close window
+        // close window
         if (keyEsc.isPressed(window) || keyQ.isPressed(window))
             glfwSetWindowShouldClose(window, GLFW_TRUE);
 
-        // Move active block in 2D
+        // move active block
         if (keyUp.isPressed(window))
             activeBlock.moveSideways(squares, 0, 1);
         if (keyDown.isPressed(window))
@@ -126,44 +120,26 @@ int Application::run() {
             activeBlock.rotateLeft(squares);
         if (keyC.isPressed(window))
             activeBlock.rotateRight(squares);
-
-        // Move active block one tile down
         if (keyX.isPressed(window))
             activeBlock.goDown(squares, timeSinceLastDrop);
-
-        // Move active block all the way down
         if (keySpace.isPressed(window))
             activeBlock.goDown(squares, timeSinceLastDrop, true);
 
-        // Automatically move active block down
-        if (timeSinceLastDrop > 2.0f) {
+        // toggle illumination and textures
+        if (keyI.isPressed(window))
+            shader->setUniform("u_illuminate", (illuminate = !illuminate));
+        if (keyT.isPressed(window))
+            shader->setUniform("u_blend", (blendTexture = !blendTexture));
+
+        // automatically move active block down
+        if (timeSinceLastDrop > 2.0f)
             activeBlock.goDown(squares, timeSinceLastDrop);
-        }
 
-        // Toggle illumination
-        if (keyI.isPressed(window)) {
-            illuminate = !illuminate;
-            shader->setUniform("u_illuminate", illuminate);
-        }
-
-        // Toggle textures
-        if (keyT.isPressed(window)) {
-            blendTexturesWithColor = !blendTexturesWithColor;
-            shader->setUniform("u_blend", blendTexturesWithColor);
-        }
-
-        // update all lights
+        // update lights and draw models
         setLights(shader);
-
         drawWalls(nearWall, sideWall, shader);
         drawCubes(squares, interpolation, deltaTime, cube, shader);
-
-        // draw active blocks
-        shader->setUniform("u_cubeTexture", textureManager->GetUnitByName("active-box"));
-        activeBlock.draw(shader);
-        if (!blendTexturesWithColor)
-            activeBlock.draw(shader, true);  // wireframe drawing
-        shader->setUniform("u_cubemap", false);
+        activeBlock.draw(shader, blendTexture);
 
         // reduce full tetris lines
         removeLines(squares, interpolation);
@@ -185,18 +161,19 @@ void Application::drawCubes(bool (*squares)[5][5],
                             Model &cube,
                             const std::shared_ptr<Shader> &shader) {
 
-    glm::vec4 colors[10] = {{1.0f, 0.1f, 0.1f, 1.0f},
-                            {0.1f, 1.0f, 0.5f, 1.0f},
-                            {0.1f, 0.5f, 1.0f, 1.0f},
-                            {1.0f, 0.1f, 1.0f, 1.0f},
-                            {1.0f, 1.0f, 0.1f, 1.0f},
-                            {0.1f, 0.5f, 0.2f, 1.0f},
-                            {1.0f, 1.0f, 1.0f, 1.0f},
-                            {1.0f, 0.1f, 0.5f, 1.0f},
-                            {0.1f, 0.1f, 1.0f, 1.0f},
-                            {1.0f, 0.1f, 0.1f, 1.0f}};
+    glm::vec4 colors[10] = {{1.0f, 0.1f, 0.1f, 1.0f},  // red
+                            {0.1f, 1.0f, 0.5f, 1.0f},  // green
+                            {0.1f, 0.5f, 1.0f, 1.0f},  // light blue
+                            {1.0f, 0.1f, 1.0f, 1.0f},  // purple
+                            {1.0f, 1.0f, 0.1f, 1.0f},  // yellow
+                            {0.1f, 0.5f, 0.2f, 1.0f},  // dark green
+                            {1.0f, 1.0f, 1.0f, 1.0f},  // white
+                            {1.0f, 0.1f, 0.5f, 1.0f},  // pink
+                            {0.1f, 0.1f, 1.0f, 1.0f},  // dark blue
+                            {1.0f, 0.1f, 0.1f, 1.0f}}; // red
 
-    shader->setUniform("u_cubeTexture", TextureManager::GetInstance()->GetUnitByName("cube"));
+    shader->setUniform("u_cubeTexture",
+                       TextureManager::GetInstance()->GetUnitByName("cube"));
     shader->setUniform("u_cubemap", true);
 
     for (int i = 0; i < 10; i++) {
@@ -326,11 +303,15 @@ void Application::setupAllLights(float constant, float linear, float quadric) {
 void Application::drawWalls(Model &farWall, Model &sideWall,
                             const std::shared_ptr<Shader> &shader) {
     shader->setUniform("u_walls", true);
-    shader->setUniform("u_walls_normal", {0.0f, 0.0f, 1.0f});
+
+    // bottom
+    farWall.setScale({5.0f, 5.0f, 5.0f});
+    farWall.setTranslation({2.0f, 2.0f, -0.5f});
     farWall.draw(shader);
 
     // left
     shader->setUniform("u_walls_normal", {1.0f, 0.0f, 0.0f});
+    sideWall.setScale({10.0f, 5.0f, 5.0f});
     sideWall.setRotation({0.0f, 1.0f, 0.0f}, -90);
     sideWall.setTranslation({-0.5f, 2.0f, 4.5f});
     sideWall.draw(shader);
