@@ -65,7 +65,7 @@ int Application::run() {
 
     // SHADERS
     auto shader = std::make_shared<Shader>(vertexShaderSrc, shader_f);
-    shader->setUniform("u_specularStrength", 3.0f);
+    shader->setUniform("u_specularStrength", 5.0f);
     shader->setUniform("u_diffuseStrength", 1.0f);
     shader->setUniform("u_ambientStrength", 1.0f);
     shader->setUniform("u_projection", camera.GetProjectionMatrix());
@@ -95,11 +95,7 @@ int Application::run() {
     float interpolation[10][5][5] = {};
 
     // LIGHTS
-    setupAllLights(1.0f, 0.3f, 0.3f);
-
-    // teeeeesst
-    squares[0][3][0] = squares[0][3][1] = squares[0][3][3] = squares[0][3][4] = true;
-
+    setupAllLights(4.0f, 0.0f, 0.4f);
 
     RenderCommands::setClearColor(glm::vec4(0.1f, 0.1f, 0.1f, 1.0f));
 
@@ -160,10 +156,7 @@ int Application::run() {
         setLights(shader);
 
         drawWalls(nearWall, sideWall, shader);
-
-        // draw all solid blocks
         drawCubes(squares, interpolation, deltaTime, cube, shader);
-//        interpolateRemovedLines(interpolation, deltaTime, cube, shader);
 
         // draw active blocks
         shader->setUniform("u_cubeTexture", textureManager->GetUnitByName("active-box"));
@@ -193,13 +186,13 @@ void Application::drawCubes(bool (*squares)[5][5],
                             const std::shared_ptr<Shader> &shader) {
 
     glm::vec4 colors[10] = {{1.0f, 0.1f, 0.1f, 1.0f},
-                            {0.1f, 1.0f, 0.1f, 1.0f},
-                            {0.1f, 0.1f, 1.0f, 1.0f},
-                            {1.0f, 0.1f, 0.1f, 1.0f},
-                            {0.1f, 1.0f, 0.1f, 1.0f},
-                            {0.1f, 0.1f, 1.0f, 1.0f},
-                            {1.0f, 0.1f, 0.1f, 1.0f},
-                            {0.1f, 1.0f, 0.1f, 1.0f},
+                            {0.1f, 1.0f, 0.5f, 1.0f},
+                            {0.1f, 0.5f, 1.0f, 1.0f},
+                            {1.0f, 0.1f, 1.0f, 1.0f},
+                            {1.0f, 1.0f, 0.1f, 1.0f},
+                            {0.1f, 0.5f, 0.2f, 1.0f},
+                            {1.0f, 1.0f, 1.0f, 1.0f},
+                            {1.0f, 0.1f, 0.5f, 1.0f},
                             {0.1f, 0.1f, 1.0f, 1.0f},
                             {1.0f, 0.1f, 0.1f, 1.0f}};
 
