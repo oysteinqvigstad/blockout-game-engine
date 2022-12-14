@@ -34,7 +34,6 @@ int Application::run() {
                               static_cast<float>(winHeight), 1.0f, -10.0f},
                              {2.0f, 2.0f, 12.4f}, {2.0f, 2.0f, 0.0f});
 
-
     // MODELS
     ActiveBlock activeBlock;
     Model nearWall(GeometricTools::UnitGridGeometry3DWTCoords<5, 5>(),
@@ -52,7 +51,6 @@ int Application::run() {
                BufferLayout({{ShaderDataType::Float3, "position"},
                              {ShaderDataType::Float3, "normals"}}));
 
-
     // SHADERS
     auto shader = std::make_shared<Shader>(vertexShaderSrc, shader_f);
     shader->setUniform("u_projection", camera.GetProjectionMatrix());
@@ -60,9 +58,9 @@ int Application::run() {
     shader->setUniform("u_cameraPos", camera.GetPosition());
 
     // LIGHTS
-    setupAllLights(3.0f, 0.1f, 0.7f);
-    shader->setUniform("u_specularStrength", 5.0f);
-    shader->setUniform("u_ambientStrength", 1.0f);
+    setupAllLights(3.0f, 0.1f, 1.0f);
+    shader->setUniform("u_specularStrength", 4.0f);
+    shader->setUniform("u_ambientStrength", 2.0f);
     shader->setUniform("u_diffuseStrength", 2.0f);
 
     // TEXTURES
@@ -86,7 +84,6 @@ int Application::run() {
     auto keyC = Keyboard(GLFW_KEY_C, 350);          // Rotate right
     auto keyI = Keyboard(GLFW_KEY_I, 350);          // Toggle illumination
     auto keyT = Keyboard(GLFW_KEY_T, 500);          // Toggle blending
-
 
     // GAME VARIABLES
     bool squares[10][5][5] = {};           // true if block occupies space
@@ -152,11 +149,14 @@ int Application::run() {
     return 0;
 }
 
-/*
- * This function does quite a lot of things.
- * It draws solid cubes
- * It draws cubes interpolated cubes that are in the process of being removed
- * It moves cubes down after cubes have been fully removed
+/**
+ * draws solid cubes and interpolates cubes that are to be removed, and once
+ * removed, moves any repeating cubes stacked on top of the removed cube down
+ * @param squares - matrix of solid cubes to be drawn
+ * @param interpolated - matrix of removed cubes, to be animated
+ * @param dt - delta time, used for interpolating removed cubes
+ * @param cube - cube obect for drawing the solid and interpolated cubes
+ * @param shader - shader to be drawn with
  */
 void Application::drawCubes(bool (*squares)[5][5],
                             float (*interpolated)[5][5],
@@ -238,6 +238,10 @@ void Application::removeLines(bool squares[10][5][5], float interpolated[10][5][
         std::cout << "Score: " << score << std::endl;
 }
 
+/**
+ * update the position of the light sources
+ * @param shader - shader to be updated
+ */
 void Application::setLights(const std::shared_ptr<Shader> &shader) {
     auto lightManager = LightManager::GetInstance();
     Model cube(GeometricTools::UnitCube3D24WNormals,
@@ -245,17 +249,22 @@ void Application::setLights(const std::shared_ptr<Shader> &shader) {
                BufferLayout({{ShaderDataType::Float3, "position"},
                              {ShaderDataType::Float3, "normals"}}));
     cube.setScale({0.1f, 0.1f, 0.1f});
-    float time = glfwGetTime() * 0.5f;
+    float time = static_cast<float>(glfwGetTime()) * 0.5f;
     std::stringstream ss;
     for (int i = 0; i < 10; i++) {
         ss << "spot" << i+1;
-        lightManager->setPosition(ss.str(), {calcLight2DPos(time), 0.5f+i});
+        lightManager->setPosition(ss.str(), {calcLight2DPos(time),
+                                             0.5f+static_cast<float>(i)});
         shader->uploadSpotlight(ss.str());
         ss.str("");
     }
 }
 
-
+/**
+ * calculate the interpolated position of the lights
+ * @param time - elapsed time since program started
+ * @return position in x and y coordinate
+ */
 glm::vec2 Application::calcLight2DPos(float time) {
     while (time > 4.0f)
         time -= 4.0f;
@@ -273,14 +282,32 @@ glm::vec2 Application::calcLight2DPos(float time) {
     }
 }
 
+/**
+ * general math function for linear interpolation
+ * @param start - start value
+ * @param end - end value
+ * @param pt - interpolation timer [0..1]
+ * @return interpolated value
+ */
 float Application::lerp(float start, float end, float pt) {
     return (1.0f - pt) * start + pt * end;
 }
 
+/**
+ * general math function for smooth step
+ * @param pt - old interpolation timer
+ * @return new interpolation timer
+ */
 float Application::sstep3(float pt) {
     return pt * pt * (3.0f - 2.0f * pt);
 }
 
+/**
+ * define all the lights in the scene
+ * @param constant - constant attenuation
+ * @param linear - linear attenuation
+ * @param quadric - quadratic attenuation
+ */
 void Application::setupAllLights(float constant, float linear, float quadric) {
     auto lightManager = LightManager::GetInstance();
     std::stringstream ss;
@@ -291,6 +318,12 @@ void Application::setupAllLights(float constant, float linear, float quadric) {
     }
 }
 
+/**
+ * draw the walls in the scene
+ * @param farWall - the wall in the far side of the tunnel
+ * @param sideWall - the side walls of the tunnel
+ * @param shader - shader to be drawn with
+ */
 void Application::drawWalls(Model &farWall, Model &sideWall,
                             const std::shared_ptr<Shader> &shader) {
     shader->setUniform("u_walls", true);
@@ -327,18 +360,23 @@ void Application::drawWalls(Model &farWall, Model &sideWall,
 
 }
 
+/**
+ * return the color of the corresponding level of the tunnel
+ * @param level - integer
+ * @return color
+ */
 glm::vec4 Application::getLevelColor(const int level) {
     switch (level) {
-        case 0: return {1.0f, 0.1f, 0.1f, 1.0f};  // red
-        case 1: return {0.1f, 1.0f, 0.5f, 1.0f};  // green
-        case 2: return {0.1f, 0.5f, 1.0f, 1.0f};  // light blue
-        case 3: return {1.0f, 0.1f, 1.0f, 1.0f};  // purple
-        case 4: return {1.0f, 1.0f, 0.1f, 1.0f};  // yellow
-        case 5: return {0.1f, 0.5f, 0.2f, 1.0f};  // dark green
-        case 6: return {1.0f, 1.0f, 1.0f, 1.0f};  // white
-        case 7: return {1.0f, 0.1f, 0.5f, 1.0f};  // pink
-        case 8: return {0.1f, 0.1f, 1.0f, 1.0f};  // dark blue
-        case 9: return {1.0f, 0.1f, 0.1f, 1.0f};  // red
+        case 0:  return {1.0f, 0.1f, 0.1f, 1.0f};  // red
+        case 1:  return {0.1f, 1.0f, 0.5f, 1.0f};  // green
+        case 2:  return {0.1f, 0.5f, 1.0f, 1.0f};  // light blue
+        case 3:  return {1.0f, 0.1f, 1.0f, 1.0f};  // purple
+        case 4:  return {1.0f, 1.0f, 0.1f, 1.0f};  // yellow
+        case 5:  return {0.1f, 0.5f, 0.2f, 1.0f};  // dark green
+        case 6:  return {1.0f, 1.0f, 1.0f, 1.0f};  // white
+        case 7:  return {1.0f, 0.1f, 0.5f, 1.0f};  // pink
+        case 8:  return {0.1f, 0.1f, 1.0f, 1.0f};  // dark blue
+        case 9:  return {1.0f, 0.1f, 0.1f, 1.0f};  // red
         default: return {1.0f, 1.0f, 1.0f, 1.0f};
     }
 }
