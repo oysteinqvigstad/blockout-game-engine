@@ -141,3 +141,39 @@ void ActiveBlock::addBlockToBoard(bool (*squares)[5][5]) {
     if (hasCollided(squares))
         freeze = true;
 }
+
+void ActiveBlock::rotateMatrix() {
+    bool tempTiles[3][3][3] = {};
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
+            for (int k = 0; k < 3; k++) {
+                tempTiles[i][k][2-j] = tiles[i][j][k];
+            }
+        }
+    }
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
+            for (int k = 0; k < 3; k++) {
+                tiles[i][j][k] = tempTiles[i][j][k];
+            }
+        }
+    }
+
+}
+
+void ActiveBlock::rotateLeft(bool squares[10][5][5]) {
+    rotateMatrix();
+    if (hasCollided(squares) || checkWallCollision()) {
+        rotateMatrix();
+        rotateMatrix();
+        rotateMatrix();
+    }
+}
+void ActiveBlock::rotateRight(bool squares[10][5][5]) {
+    rotateMatrix();
+    rotateMatrix();
+    rotateMatrix();
+    if (hasCollided(squares) || checkWallCollision()) {
+        rotateMatrix();
+    }
+}
