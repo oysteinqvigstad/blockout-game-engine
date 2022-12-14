@@ -52,15 +52,16 @@ int Application::run() {
                BufferLayout({{ShaderDataType::Float3, "position"},
                              {ShaderDataType::Float3, "normals"}}));
 
-    // LIGHTS
-    setupAllLights(4.0f, 0.0f, 0.4f);
 
     // SHADERS
     auto shader = std::make_shared<Shader>(vertexShaderSrc, shader_f);
-    shader->setUniform("u_specularStrength", 5.0f);
     shader->setUniform("u_projection", camera.GetProjectionMatrix());
     shader->setUniform("u_view", camera.GetViewMatrix());
     shader->setUniform("u_cameraPos", camera.GetPosition());
+
+    // LIGHTS
+    setupAllLights(3.0f, 0.2f, 0.7f);
+    shader->setUniform("u_specularStrength", 5.0f);
 
     // TEXTURES
     auto textureManager = TextureManager::GetInstance();
@@ -161,17 +162,6 @@ void Application::drawCubes(bool (*squares)[5][5],
                             Model &cube,
                             const std::shared_ptr<Shader> &shader) {
 
-    glm::vec4 colors[10] = {{1.0f, 0.1f, 0.1f, 1.0f},  // red
-                            {0.1f, 1.0f, 0.5f, 1.0f},  // green
-                            {0.1f, 0.5f, 1.0f, 1.0f},  // light blue
-                            {1.0f, 0.1f, 1.0f, 1.0f},  // purple
-                            {1.0f, 1.0f, 0.1f, 1.0f},  // yellow
-                            {0.1f, 0.5f, 0.2f, 1.0f},  // dark green
-                            {1.0f, 1.0f, 1.0f, 1.0f},  // white
-                            {1.0f, 0.1f, 0.5f, 1.0f},  // pink
-                            {0.1f, 0.1f, 1.0f, 1.0f},  // dark blue
-                            {1.0f, 0.1f, 0.1f, 1.0f}}; // red
-
     shader->setUniform("u_cubeTexture",
                        TextureManager::GetInstance()->GetUnitByName("cube"));
     shader->setUniform("u_cubemap", true);
@@ -182,7 +172,7 @@ void Application::drawCubes(bool (*squares)[5][5],
                 bool solid = squares[i][j][k];
                 float fade = interpolated[i][j][k];
                 if (solid || fade > 0.0f) {
-                    shader->setUniform("u_color", colors[i]);
+                    shader->setUniform("u_color", getLevelColor(i));
                     cube.setTranslation({k, j, i});
                     if (fade > 0.0f) {
                         float scale = lerp(1.0f, 0.0f,
@@ -266,20 +256,19 @@ void Application::setLights(const std::shared_ptr<Shader> &shader) {
 
 glm::vec2 Application::calcLight2DPos(float time) {
     while (time > 4.0f)
-        time -= 4;
-    if (time > 3) {
-        time -= 3;
+        time -= 4.0f;
+    if (time > 3.0f) {
+        time -= 3.0f;
         return {-0.5f, lerp(4.5f, -0.5f, sstep3(time))};
-    } else if (time > 2) {
+    } else if (time > 2.0f) {
         time -= 2.0f;
         return {lerp(4.5f, -0.5f, sstep3(time)), 4.5f};
-    } else if (time > 1) {
+    } else if (time > 1.0f) {
         time -= 1.0f;
         return {4.5f, lerp(-0.5f, 4.5f, sstep3(time))};
     } else {
         return {lerp(-0.5f, 4.5f, sstep3(time)), -0.5f};
     }
-
 }
 
 float Application::lerp(float start, float end, float pt) {
@@ -334,4 +323,20 @@ void Application::drawWalls(Model &farWall, Model &sideWall,
     sideWall.draw(shader);
     shader->setUniform("u_walls", false);
 
+}
+
+glm::vec4 Application::getLevelColor(const int level) {
+    switch (level) {
+        case 0: return {1.0f, 0.1f, 0.1f, 1.0f};  // red
+        case 1: return {0.1f, 1.0f, 0.5f, 1.0f};  // green
+        case 2: return {0.1f, 0.5f, 1.0f, 1.0f};  // light blue
+        case 3: return {1.0f, 0.1f, 1.0f, 1.0f};  // purple
+        case 4: return {1.0f, 1.0f, 0.1f, 1.0f};  // yellow
+        case 5: return {0.1f, 0.5f, 0.2f, 1.0f};  // dark green
+        case 6: return {1.0f, 1.0f, 1.0f, 1.0f};  // white
+        case 7: return {1.0f, 0.1f, 0.5f, 1.0f};  // pink
+        case 8: return {0.1f, 0.1f, 1.0f, 1.0f};  // dark blue
+        case 9: return {1.0f, 0.1f, 0.1f, 1.0f};  // red
+        default: return {1.0f, 1.0f, 1.0f, 1.0f};
+    }
 }
