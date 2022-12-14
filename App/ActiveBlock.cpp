@@ -6,6 +6,7 @@
 #include <GeometricTools.h>
 #include <random>
 #include <RenderCommands.h>
+#include <TextureManager.h>
 
 void ActiveBlock::generate() {
     posx = 1; posy = 1; posz = 9;
@@ -55,25 +56,30 @@ ActiveBlock::ActiveBlock()
     generate();
 }
 
-void ActiveBlock::draw(const std::shared_ptr<Shader> & shader, const bool wireframe) {
-        RenderCommands::disableGLDepthTesting();
-        shader->setUniform("u_color", {0.0f, 0.0f, 0.0f, 0.2f});
-        if (wireframe) {
-            RenderCommands::setWireframeMode(shader);
-            shader->setUniform("u_color", {1.0f, 1.0f, 1.0f, 1.0f});
-        }
+void ActiveBlock::draw(const std::shared_ptr<Shader> & shader, const bool blend) {
+    RenderCommands::disableGLDepthTesting();
+    if (blend)
+        shader->setUniform("u_cubeTexture",
+                           TextureManager::GetInstance()->GetUnitByName("active-box"));
     for (int i = 0; i < 3; i++) {
-            for (int j = 0; j < 3; j++) {
-                for (int k = 0; k < 3; k++) {
-                    if (tiles[i][j][k]) {
-                        cube.setTranslation({posx+k, posy+j, posz-i});
+         for (int j = 0; j < 3; j++) {
+            for (int k = 0; k < 3; k++) {
+                if (tiles[i][j][k]) {
+                    shader->setUniform("u_color", {0.0f, 0.0f, 0.0f, 0.2f});
+                    cube.setTranslation({posx+k, posy+j, posz-i});
+                    cube.draw(shader);
+                    if (!blend) {
+                        RenderCommands::setWireframeMode(shader);
+                        shader->setUniform("u_color", {1.0f, 1.0f, 1.0f, 1.0f});
                         cube.draw(shader);
+                        RenderCommands::setSolidMode(shader);
                     }
                 }
             }
-        }
-        RenderCommands::setSolidMode(shader);
-        RenderCommands::enableGLDepthTesting();
+         }
+    }
+    shader->setUniform("u_cubemap", false);
+    RenderCommands::enableGLDepthTesting();
 }
 
 void ActiveBlock::moveSideways(const bool (*squares)[5][5], int x, int y) {

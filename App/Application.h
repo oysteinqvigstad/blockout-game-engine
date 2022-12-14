@@ -27,6 +27,7 @@ private:
     static float sstep3(float dt);
     static glm::vec2 calcLight2DPos(float time);
     static void drawWalls(Model &farWall, Model &sideWall, const std::shared_ptr<Shader> &shader);
+    static glm::vec4 getLevelColor(int level);
 public:
     Application(const std::string& name, const std::string& version);
     void parseArguments(int argc, char **argv) override;

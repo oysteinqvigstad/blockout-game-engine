@@ -29,11 +29,13 @@ unsigned Application::init() {
 
 int Application::run() {
 
-    // SETTING UP CAMERA
-    PerspectiveCamera camera({80.0f, static_cast<float>(winWidth), static_cast<float>(winHeight), 1.0f, -10.0f}, {2.0f, 2.0f, 12.4f}, {2.0f, 2.0f, 0.0f});
-
+    // CAMERA
+    PerspectiveCamera camera({80.0f, static_cast<float>(winWidth),
+                              static_cast<float>(winHeight), 1.0f, -10.0f},
+                             {2.0f, 2.0f, 12.4f}, {2.0f, 2.0f, 0.0f});
 
     // MODELS
+    ActiveBlock activeBlock;
     Model nearWall(GeometricTools::UnitGridGeometry3DWTCoords<5, 5>(),
                    GeometricTools::UnitGridTopologyTriangles<5, 5>(),
                    BufferLayout({{ShaderDataType::Float3, "position"},
@@ -49,71 +51,63 @@ int Application::run() {
                BufferLayout({{ShaderDataType::Float3, "position"},
                              {ShaderDataType::Float3, "normals"}}));
 
+    // SHADERS
+    auto shader = std::make_shared<Shader>(vertexShaderSrc, shader_f);
+    shader->setUniform("u_projection", camera.GetProjectionMatrix());
+    shader->setUniform("u_view", camera.GetViewMatrix());
+    shader->setUniform("u_cameraPos", camera.GetPosition());
 
-    nearWall.setScale({5.0f, 5.0f, 5.0f});
-    nearWall.setTranslation({2.0f, 2.0f, -0.5f});
-    sideWall.setScale({10.0f, 5.0f, 5.0f});
-
-
-    ActiveBlock activeBlock;
+    // LIGHTS
+    setupAllLights(3.0f, 0.1f, 1.0f);
+    shader->setUniform("u_specularStrength", 4.0f);
+    shader->setUniform("u_ambientStrength", 2.0f);
+    shader->setUniform("u_diffuseStrength", 2.0f);
 
     // TEXTURES
     auto textureManager = TextureManager::GetInstance();
     textureManager->LoadTexture2D("wall", "walls.jpg", 0);
     textureManager->LoadCubeMap("cube", {"cube.jpg"}, 1);
     textureManager->LoadCubeMap("active-box", {"transparent-box.png"}, 2);
-
-    // SHADERS
-    auto shader = std::make_shared<Shader>(vertexShaderSrc, shader_f);
-    shader->setUniform("u_specularStrength", 5.0f);
-    shader->setUniform("u_diffuseStrength", 1.0f);
-    shader->setUniform("u_ambientStrength", 1.0f);
-    shader->setUniform("u_projection", camera.GetProjectionMatrix());
-    shader->setUniform("u_view", camera.GetViewMatrix());
-    shader->setUniform("u_cameraPos", camera.GetPosition());
     shader->setUniform("u_flatTexture", textureManager->GetUnitByName("wall"));
     shader->setUniform("u_cubeTexture", textureManager->GetUnitByName("cube"));
 
     // KEYBOARD
-    auto keyEsc = Keyboard(GLFW_KEY_ESCAPE);
-    auto keyUp = Keyboard(GLFW_KEY_UP, 350);
-    auto keyDown = Keyboard(GLFW_KEY_DOWN, 350);
-    auto keyLeft = Keyboard(GLFW_KEY_LEFT, 350);
-    auto keyRight = Keyboard(GLFW_KEY_RIGHT, 350);
-    auto keySpace = Keyboard(GLFW_KEY_SPACE, 350);
-    auto keyZ = Keyboard(GLFW_KEY_Z, 350);  // Rotate left
-    auto keyX = Keyboard(GLFW_KEY_X, 350);  // Drop down one
-    auto keyC = Keyboard(GLFW_KEY_C, 350);  // Rotate right
-    auto keyI = Keyboard(GLFW_KEY_I, 350);  // Toggles illumination
-    auto keyT = Keyboard(GLFW_KEY_T, 500);  // Toggles blending
-    auto keyQ = Keyboard(GLFW_KEY_Q);       // Quiting the application
+    auto keyEsc = Keyboard(GLFW_KEY_ESCAPE);        // Quit application
+    auto keyQ = Keyboard(GLFW_KEY_Q);               // Quit the application
+    auto keyUp = Keyboard(GLFW_KEY_UP, 350);        // Move up
+    auto keyDown = Keyboard(GLFW_KEY_DOWN, 350);    // Move down
+    auto keyLeft = Keyboard(GLFW_KEY_LEFT, 350);    // Move left
+    auto keyRight = Keyboard(GLFW_KEY_RIGHT, 350);  // Move right
+    auto keyX = Keyboard(GLFW_KEY_X, 350);          // Move inwards
+    auto keySpace = Keyboard(GLFW_KEY_SPACE, 350);  // Move inwards entirely
+    auto keyZ = Keyboard(GLFW_KEY_Z, 350);          // Rotate left
+    auto keyC = Keyboard(GLFW_KEY_C, 350);          // Rotate right
+    auto keyI = Keyboard(GLFW_KEY_I, 350);          // Toggle illumination
+    auto keyT = Keyboard(GLFW_KEY_T, 500);          // Toggle blending
 
-    bool blendTexturesWithColor = false;
-    bool illuminate = false;
+    // GAME VARIABLES
+    bool squares[10][5][5] = {};           // true if block occupies space
+    float interpolation[10][5][5] = {};    // >0.0f if block should be animated
+    bool blendTexture = false;             // shader setting
+    bool illuminate = false;               // shader setting
     float elapsedTime, deltaTime, lastTime, timeSinceLastDrop = 0.0f;
-    bool squares[10][5][5] = {};
-    float interpolation[10][5][5] = {};
 
-    // LIGHTS
-    setupAllLights(4.0f, 0.0f, 0.4f);
-
-    RenderCommands::setClearColor(glm::vec4(0.1f, 0.1f, 0.1f, 1.0f));
-
+    // GAME LOOP
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
         RenderCommands::clear();
 
-        // Update time
+        // update time
         elapsedTime = static_cast<float>(glfwGetTime());
         deltaTime = elapsedTime - lastTime;
         lastTime = elapsedTime;
         timeSinceLastDrop += deltaTime;
 
-        // Close window
+        // close window
         if (keyEsc.isPressed(window) || keyQ.isPressed(window))
             glfwSetWindowShouldClose(window, GLFW_TRUE);
 
-        // Move active block in 2D
+        // move active block
         if (keyUp.isPressed(window))
             activeBlock.moveSideways(squares, 0, 1);
         if (keyDown.isPressed(window))
@@ -126,44 +120,26 @@ int Application::run() {
             activeBlock.rotateLeft(squares);
         if (keyC.isPressed(window))
             activeBlock.rotateRight(squares);
-
-        // Move active block one tile down
         if (keyX.isPressed(window))
             activeBlock.goDown(squares, timeSinceLastDrop);
-
-        // Move active block all the way down
         if (keySpace.isPressed(window))
             activeBlock.goDown(squares, timeSinceLastDrop, true);
 
-        // Automatically move active block down
-        if (timeSinceLastDrop > 2.0f) {
+        // toggle illumination and textures
+        if (keyI.isPressed(window))
+            shader->setUniform("u_illuminate", (illuminate = !illuminate));
+        if (keyT.isPressed(window))
+            shader->setUniform("u_blend", (blendTexture = !blendTexture));
+
+        // automatically move active block down
+        if (timeSinceLastDrop > 2.0f)
             activeBlock.goDown(squares, timeSinceLastDrop);
-        }
 
-        // Toggle illumination
-        if (keyI.isPressed(window)) {
-            illuminate = !illuminate;
-            shader->setUniform("u_illuminate", illuminate);
-        }
-
-        // Toggle textures
-        if (keyT.isPressed(window)) {
-            blendTexturesWithColor = !blendTexturesWithColor;
-            shader->setUniform("u_blend", blendTexturesWithColor);
-        }
-
-        // update all lights
+        // update lights and draw models
         setLights(shader);
-
         drawWalls(nearWall, sideWall, shader);
         drawCubes(squares, interpolation, deltaTime, cube, shader);
-
-        // draw active blocks
-        shader->setUniform("u_cubeTexture", textureManager->GetUnitByName("active-box"));
-        activeBlock.draw(shader);
-        if (!blendTexturesWithColor)
-            activeBlock.draw(shader, true);  // wireframe drawing
-        shader->setUniform("u_cubemap", false);
+        activeBlock.draw(shader, blendTexture);
 
         // reduce full tetris lines
         removeLines(squares, interpolation);
@@ -173,11 +149,14 @@ int Application::run() {
     return 0;
 }
 
-/*
- * This function does quite a lot of things.
- * It draws solid cubes
- * It draws cubes interpolated cubes that are in the process of being removed
- * It moves cubes down after cubes have been fully removed
+/**
+ * draws solid cubes and interpolates cubes that are to be removed, and once
+ * removed, moves any repeating cubes stacked on top of the removed cube down
+ * @param squares - matrix of solid cubes to be drawn
+ * @param interpolated - matrix of removed cubes, to be animated
+ * @param dt - delta time, used for interpolating removed cubes
+ * @param cube - cube obect for drawing the solid and interpolated cubes
+ * @param shader - shader to be drawn with
  */
 void Application::drawCubes(bool (*squares)[5][5],
                             float (*interpolated)[5][5],
@@ -185,18 +164,8 @@ void Application::drawCubes(bool (*squares)[5][5],
                             Model &cube,
                             const std::shared_ptr<Shader> &shader) {
 
-    glm::vec4 colors[10] = {{1.0f, 0.1f, 0.1f, 1.0f},
-                            {0.1f, 1.0f, 0.5f, 1.0f},
-                            {0.1f, 0.5f, 1.0f, 1.0f},
-                            {1.0f, 0.1f, 1.0f, 1.0f},
-                            {1.0f, 1.0f, 0.1f, 1.0f},
-                            {0.1f, 0.5f, 0.2f, 1.0f},
-                            {1.0f, 1.0f, 1.0f, 1.0f},
-                            {1.0f, 0.1f, 0.5f, 1.0f},
-                            {0.1f, 0.1f, 1.0f, 1.0f},
-                            {1.0f, 0.1f, 0.1f, 1.0f}};
-
-    shader->setUniform("u_cubeTexture", TextureManager::GetInstance()->GetUnitByName("cube"));
+    shader->setUniform("u_cubeTexture",
+                       TextureManager::GetInstance()->GetUnitByName("cube"));
     shader->setUniform("u_cubemap", true);
 
     for (int i = 0; i < 10; i++) {
@@ -205,7 +174,7 @@ void Application::drawCubes(bool (*squares)[5][5],
                 bool solid = squares[i][j][k];
                 float fade = interpolated[i][j][k];
                 if (solid || fade > 0.0f) {
-                    shader->setUniform("u_color", colors[i]);
+                    shader->setUniform("u_color", getLevelColor(i));
                     cube.setTranslation({k, j, i});
                     if (fade > 0.0f) {
                         float scale = lerp(1.0f, 0.0f,
@@ -269,6 +238,10 @@ void Application::removeLines(bool squares[10][5][5], float interpolated[10][5][
         std::cout << "Score: " << score << std::endl;
 }
 
+/**
+ * update the position of the light sources
+ * @param shader - shader to be updated
+ */
 void Application::setLights(const std::shared_ptr<Shader> &shader) {
     auto lightManager = LightManager::GetInstance();
     Model cube(GeometricTools::UnitCube3D24WNormals,
@@ -276,43 +249,65 @@ void Application::setLights(const std::shared_ptr<Shader> &shader) {
                BufferLayout({{ShaderDataType::Float3, "position"},
                              {ShaderDataType::Float3, "normals"}}));
     cube.setScale({0.1f, 0.1f, 0.1f});
-    float time = glfwGetTime() * 0.5f;
+    float time = static_cast<float>(glfwGetTime()) * 0.5f;
     std::stringstream ss;
     for (int i = 0; i < 10; i++) {
         ss << "spot" << i+1;
-        lightManager->setPosition(ss.str(), {calcLight2DPos(time), 0.5f+i});
+        lightManager->setPosition(ss.str(), {calcLight2DPos(time),
+                                             0.5f+static_cast<float>(i)});
         shader->uploadSpotlight(ss.str());
         ss.str("");
     }
 }
 
-
+/**
+ * calculate the interpolated position of the lights
+ * @param time - elapsed time since program started
+ * @return position in x and y coordinate
+ */
 glm::vec2 Application::calcLight2DPos(float time) {
     while (time > 4.0f)
-        time -= 4;
-    if (time > 3) {
-        time -= 3;
+        time -= 4.0f;
+    if (time > 3.0f) {
+        time -= 3.0f;
         return {-0.5f, lerp(4.5f, -0.5f, sstep3(time))};
-    } else if (time > 2) {
+    } else if (time > 2.0f) {
         time -= 2.0f;
         return {lerp(4.5f, -0.5f, sstep3(time)), 4.5f};
-    } else if (time > 1) {
+    } else if (time > 1.0f) {
         time -= 1.0f;
         return {4.5f, lerp(-0.5f, 4.5f, sstep3(time))};
     } else {
         return {lerp(-0.5f, 4.5f, sstep3(time)), -0.5f};
     }
-
 }
 
+/**
+ * general math function for linear interpolation
+ * @param start - start value
+ * @param end - end value
+ * @param pt - interpolation timer [0..1]
+ * @return interpolated value
+ */
 float Application::lerp(float start, float end, float pt) {
     return (1.0f - pt) * start + pt * end;
 }
 
+/**
+ * general math function for smooth step
+ * @param pt - old interpolation timer
+ * @return new interpolation timer
+ */
 float Application::sstep3(float pt) {
     return pt * pt * (3.0f - 2.0f * pt);
 }
 
+/**
+ * define all the lights in the scene
+ * @param constant - constant attenuation
+ * @param linear - linear attenuation
+ * @param quadric - quadratic attenuation
+ */
 void Application::setupAllLights(float constant, float linear, float quadric) {
     auto lightManager = LightManager::GetInstance();
     std::stringstream ss;
@@ -323,14 +318,24 @@ void Application::setupAllLights(float constant, float linear, float quadric) {
     }
 }
 
+/**
+ * draw the walls in the scene
+ * @param farWall - the wall in the far side of the tunnel
+ * @param sideWall - the side walls of the tunnel
+ * @param shader - shader to be drawn with
+ */
 void Application::drawWalls(Model &farWall, Model &sideWall,
                             const std::shared_ptr<Shader> &shader) {
     shader->setUniform("u_walls", true);
-    shader->setUniform("u_walls_normal", {0.0f, 0.0f, 1.0f});
+
+    // bottom
+    farWall.setScale({5.0f, 5.0f, 5.0f});
+    farWall.setTranslation({2.0f, 2.0f, -0.5f});
     farWall.draw(shader);
 
     // left
     shader->setUniform("u_walls_normal", {1.0f, 0.0f, 0.0f});
+    sideWall.setScale({10.0f, 5.0f, 5.0f});
     sideWall.setRotation({0.0f, 1.0f, 0.0f}, -90);
     sideWall.setTranslation({-0.5f, 2.0f, 4.5f});
     sideWall.draw(shader);
@@ -353,4 +358,25 @@ void Application::drawWalls(Model &farWall, Model &sideWall,
     sideWall.draw(shader);
     shader->setUniform("u_walls", false);
 
+}
+
+/**
+ * return the color of the corresponding level of the tunnel
+ * @param level - integer
+ * @return color
+ */
+glm::vec4 Application::getLevelColor(const int level) {
+    switch (level) {
+        case 0:  return {1.0f, 0.1f, 0.1f, 1.0f};  // red
+        case 1:  return {0.1f, 1.0f, 0.5f, 1.0f};  // green
+        case 2:  return {0.1f, 0.5f, 1.0f, 1.0f};  // light blue
+        case 3:  return {1.0f, 0.1f, 1.0f, 1.0f};  // purple
+        case 4:  return {1.0f, 1.0f, 0.1f, 1.0f};  // yellow
+        case 5:  return {0.1f, 0.5f, 0.2f, 1.0f};  // dark green
+        case 6:  return {1.0f, 1.0f, 1.0f, 1.0f};  // white
+        case 7:  return {1.0f, 0.1f, 0.5f, 1.0f};  // pink
+        case 8:  return {0.1f, 0.1f, 1.0f, 1.0f};  // dark blue
+        case 9:  return {1.0f, 0.1f, 0.1f, 1.0f};  // red
+        default: return {1.0f, 1.0f, 1.0f, 1.0f};
+    }
 }

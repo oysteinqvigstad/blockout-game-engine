@@ -89,7 +89,7 @@ vec3 calcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir) {
 
     // specular lighting
     vec3 reflectDirection = reflect(-lightDirection, normal);
-    float spec = pow(max(dot(viewDir, reflectDirection), 0.0), 64);
+    float spec = pow(max(dot(viewDir, reflectDirection), 0.0), 32);
 
     // attenuation
     float distance = length(light.position - fragPos);
