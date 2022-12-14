@@ -92,9 +92,14 @@ int Application::run() {
     bool illuminate = false;
     float elapsedTime, deltaTime, lastTime, timeSinceLastDrop = 0.0f;
     bool squares[10][5][5] = {};
+    float interpolation[10][5][5] = {};
 
     // LIGHTS
     setupAllLights(1.0f, 0.3f, 0.3f);
+
+    // teeeeesst
+    squares[0][3][0] = squares[0][3][1] = squares[0][3][3] = squares[0][3][4] = true;
+
 
     RenderCommands::setClearColor(glm::vec4(0.1f, 0.1f, 0.1f, 1.0f));
 
@@ -157,7 +162,8 @@ int Application::run() {
         drawWalls(nearWall, sideWall, shader);
 
         // draw all solid blocks
-        drawCubes(squares, cube, shader);
+        drawCubes(squares, interpolation, deltaTime, cube, shader);
+//        interpolateRemovedLines(interpolation, deltaTime, cube, shader);
 
         // draw active blocks
         shader->setUniform("u_cubeTexture", textureManager->GetUnitByName("active-box"));
@@ -167,14 +173,22 @@ int Application::run() {
         shader->setUniform("u_cubemap", false);
 
         // reduce full tetris lines
-        removeLines(squares);
+        removeLines(squares, interpolation);
 
         glfwSwapBuffers(window);
     }
     return 0;
 }
 
+/*
+ * This function does quite a lot of things.
+ * It draws solid cubes
+ * It draws cubes interpolated cubes that are in the process of being removed
+ * It moves cubes down after cubes have been fully removed
+ */
 void Application::drawCubes(bool (*squares)[5][5],
+                            float (*interpolated)[5][5],
+                            float dt,
                             Model &cube,
                             const std::shared_ptr<Shader> &shader) {
 
@@ -195,17 +209,42 @@ void Application::drawCubes(bool (*squares)[5][5],
     for (int i = 0; i < 10; i++) {
         for (int j = 0; j < 5; j++) {
             for (int k = 0; k < 5; k++) {
-                if (squares[i][j][k]) {
+                bool solid = squares[i][j][k];
+                float fade = interpolated[i][j][k];
+                if (solid || fade > 0.0f) {
                     shader->setUniform("u_color", colors[i]);
                     cube.setTranslation({k, j, i});
+                    if (fade > 0.0f) {
+                        float scale = lerp(1.0f, 0.0f,
+                                           sstep3(1.0f-interpolated[i][j][k]));
+                        cube.setScale({scale, scale, scale});
+                        interpolated[i][j][k] -= dt;
+                    } else {
+                        cube.setScale({1.0f, 1.0f, 1.0f});
+                    }
                     cube.draw(shader);
+                }
+                if (fade < 0.0f) {
+                    int row = i;
+                    while (squares[row+1][j][k] && row < 8) {
+                        squares[row][j][k] = squares[row+1][j][k];
+                        row++;
+                    }
+                    squares[row][j][k] = false;
+                    interpolated[i][j][k] = 0.0f;
                 }
             }
         }
     }
 }
 
-void Application::removeLines(bool squares[10][5][5]) {
+/**
+ * Removes all full lines in the board. Checks both x and y axis, but not z
+ * @param squares      - boolean matrix of where the blocks are
+ * @param interpolated - adds interpolation time so that smooth animation can
+ *                       be applied to the removed square
+ */
+void Application::removeLines(bool squares[10][5][5], float interpolated[10][5][5]) {
     int oldScore = score;
     for (int i = 0; i < 10; i++) {
         bool forRemoval[5][5] = {};
@@ -227,6 +266,7 @@ void Application::removeLines(bool squares[10][5][5]) {
             for (int k = 0; k < 5; k++) {
                 if (forRemoval[j][k]) {
                     squares[i][j][k] = false;
+                    interpolated[i][j][k] = 1.0f;
                     score += 10;
                 }
             }

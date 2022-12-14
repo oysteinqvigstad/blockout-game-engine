@@ -19,8 +19,8 @@
 class Application : public GLFWApplication {
 private:
     int score = 0;
-    static void drawCubes(bool squares[10][5][5], Model &cube, const std::shared_ptr<Shader> &shader);
-    void removeLines(bool squares[10][5][5]);
+    static void drawCubes(bool squares[10][5][5], float interpolated[10][5][5], float dt, Model &cube, const std::shared_ptr<Shader> &shader);
+    void removeLines(bool squares[10][5][5], float interpolated[10][5][5]);
     static void setLights(const std::shared_ptr<Shader> &shader);
     static void setupAllLights(float constant, float linear, float quadric);
     static float lerp(float start, float end, float pt);
