@@ -10,9 +10,7 @@
 
 Application::Application(const std::string &name,
                          const std::string &version) :
-    GLFWApplication(name, version),
-    selectorPos{},
-    numSquares{} {
+    GLFWApplication(name, version) {
 }
 
 void Application::parseArguments(int argc, char **argv) {
@@ -36,14 +34,14 @@ int Application::run() {
 
 
     // MODELS
-    Model tunnelFarSide(GeometricTools::UnitGridGeometry3DWTCoords<5, 5>(),
-                        GeometricTools::UnitGridTopologyTriangles<5, 5>(),
-                        BufferLayout({{ShaderDataType::Float3, "position"},
+    Model nearWall(GeometricTools::UnitGridGeometry3DWTCoords<5, 5>(),
+                   GeometricTools::UnitGridTopologyTriangles<5, 5>(),
+                   BufferLayout({{ShaderDataType::Float3, "position"},
                              {ShaderDataType::Float3, "color"},
                              {ShaderDataType::Float2, "texture"}}));
-    Model tunnelSideWall(GeometricTools::UnitGridGeometry3DWTCoords<10, 5>(),
-                         GeometricTools::UnitGridTopologyTriangles<10, 5>(),
-                         BufferLayout({{ShaderDataType::Float3, "position"},
+    Model sideWall(GeometricTools::UnitGridGeometry3DWTCoords<10, 5>(),
+                   GeometricTools::UnitGridTopologyTriangles<10, 5>(),
+                   BufferLayout({{ShaderDataType::Float3, "position"},
                                        {ShaderDataType::Float3, "color"},
                                        {ShaderDataType::Float2, "texture"}}));
     Model cube(GeometricTools::UnitCube3D24WNormals,
@@ -52,9 +50,9 @@ int Application::run() {
                              {ShaderDataType::Float3, "normals"}}));
 
 
-    tunnelFarSide.setScale({5.0f, 5.0f, 5.0f});
-    tunnelFarSide.setTranslation({2.0f, 2.0f, -0.5f});
-    tunnelSideWall.setScale({10.0f, 5.0f, 5.0f});
+    nearWall.setScale({5.0f, 5.0f, 5.0f});
+    nearWall.setTranslation({2.0f, 2.0f, -0.5f});
+    sideWall.setScale({10.0f, 5.0f, 5.0f});
 
 
     ActiveBlock activeBlock;
@@ -149,34 +147,7 @@ int Application::run() {
         // update all lights
         setLights(shader);
 
-        // WALLS
-        shader->setUniform("u_walls", true);
-        shader->setUniform("u_walls_normal", {0.0f, 0.0f, 1.0f});
-        tunnelFarSide.draw(shader);
-
-        // left
-        shader->setUniform("u_walls_normal", {1.0f, 0.0f, 0.0f});
-        tunnelSideWall.setRotation({0.0f, 1.0f, 0.0f}, -90);
-        tunnelSideWall.setTranslation({-0.5f, 2.0f, 4.5f});
-        tunnelSideWall.draw(shader);
-
-        // right
-        shader->setUniform("u_walls_normal", {-1.0f, 0.0f, 0.0f});
-        tunnelSideWall.setTranslation({4.5f, 2.0f, 4.5f});
-        tunnelSideWall.draw(shader);
-
-        // top
-        shader->setUniform("u_walls_normal", {0.0f, -1.0f, 0.0f});
-        tunnelSideWall.setRotation({0.0f, 0.0f, 1.0f}, 90);
-        tunnelSideWall.addRotation({0.0f, 1.0f, 0.0f}, 90);
-        tunnelSideWall.setTranslation({2.0f, 4.5f, 4.5f});
-        tunnelSideWall.draw(shader);
-
-        // bottom
-        shader->setUniform("u_walls_normal", {0.0f, 1.0f, 0.0f});
-        tunnelSideWall.setTranslation({2.0f, -0.5f, 4.5f});
-        tunnelSideWall.draw(shader);
-        shader->setUniform("u_walls", false);
+        drawWalls(nearWall, sideWall, shader);
 
         // draw all solid blocks
         drawCubes(squares, cube, shader);
@@ -197,7 +168,7 @@ int Application::run() {
 }
 
 void Application::drawCubes(bool (*squares)[5][5],
-                            Model cube,
+                            Model &cube,
                             const std::shared_ptr<Shader> &shader) {
 
     glm::vec4 colors[10] = {{1.0f, 0.1f, 0.1f, 1.0f},
@@ -310,4 +281,36 @@ void Application::setupAllLights(float constant, float linear, float quadric) {
         lightManager->addSpotLight({ss.str(), constant, linear, quadric});
         ss.str("");
     }
+}
+
+void Application::drawWalls(Model &farWall, Model &sideWall,
+                            const std::shared_ptr<Shader> &shader) {
+    shader->setUniform("u_walls", true);
+    shader->setUniform("u_walls_normal", {0.0f, 0.0f, 1.0f});
+    farWall.draw(shader);
+
+    // left
+    shader->setUniform("u_walls_normal", {1.0f, 0.0f, 0.0f});
+    sideWall.setRotation({0.0f, 1.0f, 0.0f}, -90);
+    sideWall.setTranslation({-0.5f, 2.0f, 4.5f});
+    sideWall.draw(shader);
+
+    // right
+    shader->setUniform("u_walls_normal", {-1.0f, 0.0f, 0.0f});
+    sideWall.setTranslation({4.5f, 2.0f, 4.5f});
+    sideWall.draw(shader);
+
+    // top
+    shader->setUniform("u_walls_normal", {0.0f, -1.0f, 0.0f});
+    sideWall.setRotation({0.0f, 0.0f, 1.0f}, 90);
+    sideWall.addRotation({0.0f, 1.0f, 0.0f}, 90);
+    sideWall.setTranslation({2.0f, 4.5f, 4.5f});
+    sideWall.draw(shader);
+
+    // bottom
+    shader->setUniform("u_walls_normal", {0.0f, 1.0f, 0.0f});
+    sideWall.setTranslation({2.0f, -0.5f, 4.5f});
+    sideWall.draw(shader);
+    shader->setUniform("u_walls", false);
+
 }

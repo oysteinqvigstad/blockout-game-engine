@@ -8,39 +8,6 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 namespace GeometricTools {
-    glm::mat4 calcTransformMatrix(glm::vec3 scale, glm::vec3 rotate,
-                                  float degrees, glm::vec3 translate);
-
-    struct chessPiece {
-        glm::ivec2 squareNumber;
-        glm::vec3 color;
-        bool highlighted;
-        [[nodiscard]] glm::vec3 getTranslationMatrix() const {
-            return {static_cast<float>(squareNumber.x) - 3.5f,
-                    0.25f + 0.01f, 3.5f - static_cast<float>(squareNumber.y)};
-        }
-        [[nodiscard]] glm::vec3 getColor(glm::ivec2 &selectorPos) const {
-            if (highlighted)
-                return {1.0f, 0.0f, 1.0f};
-            else if (squareNumber == selectorPos)
-                return {0.0f, 1.0f, 0.0f};
-            else
-                return color;
-        }
-    };
-
-    template <int x, int y>
-    std::list<chessPiece> createPieces() {
-        std::list<chessPiece> list;
-        for (int i = 0; i < x; i++) {
-            list.push_back({{i, 0}, {1.0f, 0.0f, 0.0f}, false});
-            list.push_back({{i, 1}, {1.0f, 0.0f, 0.0f}, false});
-            list.push_back({{i, y-1}, {0.0f, 0.0f, 1.0f}, false});
-            list.push_back({{i, y-2}, {0.0f, 0.0f, 1.0f}, false});
-        }
-        return list;
-    }
-
     template <int x, int y>
     constexpr std::array<float, (x+1)*(y+1)*8> UnitGridGeometry3DWTCoords() {
         std::array<float, (x+1)*(y+1)*8> board;
@@ -67,15 +34,11 @@ namespace GeometricTools {
     }
 
 
-
-
-
     constexpr std::array<float, 3*(3+3+2)> TextureTriangle {
             -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
              0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
              0.0f,  0.5f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f
     };
-
 
 
     constexpr std::array<float, 3*2> UnitTriangle2D = {

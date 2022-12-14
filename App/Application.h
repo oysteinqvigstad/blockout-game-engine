@@ -19,15 +19,14 @@
 class Application : public GLFWApplication {
 private:
     int score = 0;
-    glm::ivec2 selectorPos;       // X and Y pos of the selector in [0,numSq]
-    int numSquares[2];            // Number of squares in X and Y direction
-    void drawCubes(bool squares[10][5][5], Model cube, const std::shared_ptr<Shader> &shader);
+    static void drawCubes(bool squares[10][5][5], Model &cube, const std::shared_ptr<Shader> &shader);
     void removeLines(bool squares[10][5][5]);
-    void setLights(const std::shared_ptr<Shader> &shader);
-    void setupAllLights(float constant, float linear, float quadric);
-    float lerp(float start, float end, float pt);
-    float sstep3(float dt);
-    glm::vec2 calcLight2DPos(float time);
+    static void setLights(const std::shared_ptr<Shader> &shader);
+    static void setupAllLights(float constant, float linear, float quadric);
+    static float lerp(float start, float end, float pt);
+    static float sstep3(float dt);
+    static glm::vec2 calcLight2DPos(float time);
+    static void drawWalls(Model &farWall, Model &sideWall, const std::shared_ptr<Shader> &shader);
 public:
     Application(const std::string& name, const std::string& version);
     void parseArguments(int argc, char **argv) override;
